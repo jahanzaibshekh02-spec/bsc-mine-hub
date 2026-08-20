@@ -9,14 +9,19 @@ workflows:
     scripts:
       - name: Fix V1 Embedding Forever
         script: |
+          # google-services.json ko bachao
+          cp android/app/google-services.json /tmp/gs.json || cp google-services.json /tmp/gs.json || echo "no gs file"
           rm -rf android
-          flutter create --platforms=android --project-name bsc_mine_hub .
-          # Ads ko abhi band rakho taake build ho jaye
+          flutter create --platforms=android --org com.bscminehub --project-name bsc_mine_hub .
+          mkdir -p android/app
+          cp /tmp/gs.json android/app/google-services.json || echo "gs restore skipped"
+          # Ads ko abhi band rakho
           sed -i.bak 's/.*google_mobile_ads/# removed/g' pubspec.yaml || true
+          # firebase imports fix
           flutter clean
           flutter pub get
       - name: Build APK
         script: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons -v
     artifacts:
       - build/**/outputs/**/*.apk
