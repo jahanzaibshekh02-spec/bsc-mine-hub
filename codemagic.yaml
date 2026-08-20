@@ -7,15 +7,19 @@ workflows:
       flutter: stable
       java: 17
     scripts:
-      - name: Update Ads Library
+      - name: Fix V1 and Old Packages
         script: |
-          # Purana google_mobile_ads update karo
-          flutter pub add google_mobile_ads:^5.1.0 || true
-          # pubspec.yaml me version force update
-          sed -i '' 's/google_mobile_ads:.*/google_mobile_ads: ^5.1.0/g' pubspec.yaml || sed -i 's/google_mobile_ads:.*/google_mobile_ads: ^5.1.0/g' pubspec.yaml
-          flutter clean
+          # Step 1: AdMob update
+          sed -i.bak 's/google_mobile_ads:.*/google_mobile_ads: ^5.1.0/g' pubspec.yaml || true
+          # Step 2: Android folder naya banao (V1 khatam)
+          rm -rf android
+          flutter create --platforms=android --project-name bsc_mine_hub .
+          # Step 3: google-services.json agar hai to wapis copy
+          if [ -f "google-services.json" ]; then cp google-services.json android/app/google-services.json; fi
+          if [ -f "android/app/google-services.json.bak" ]; then cp android/app/google-services.json.bak android/app/google-services.json; fi
       - name: Get packages
         script: |
+          flutter clean
           flutter pub get
       - name: Build APK
         script: |
