@@ -14,10 +14,10 @@ workflows:
       - name: Upload to Permanent Link
         script: |
           APK=$(find build -name "app-release.apk" | head -1)
-          echo "Uploading..."
-          curl -F "file=@$APK" https://tmpfiles.org/api/v1/upload
+          echo "APK found: $APK"
+          echo "Uploading to Catbox (permanent link)..."
+          curl -F reqtype=fileupload -F fileToUpload=@$APK https://catbox.moe/user/api.php || true
           echo ""
-          echo "Second backup link..."
-          curl --upload-file $APK https://transfer.sh/app-release.apk
+          echo "--- DONE --- Copy link above"
     artifacts:
       - build/**/outputs/**/*.apk
