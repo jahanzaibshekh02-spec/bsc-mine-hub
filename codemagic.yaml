@@ -4,25 +4,22 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 20
     environment:
-      flutter: stable
+      flutter: 3.24.5
       xcode: latest
       cocoapods: default
     scripts:
       - name: Set up Flutter
         script: |
-          flutter clean
+          flutter --version
           flutter pub get
       - name: Build APK
         script: |
-          flutter build apk --release --no-tree-shake-icons
-      - name: Create Super Fast Link
+          flutter build apk --release
+      - name: Make Easy Link
         script: |
-          APK_PATH=$(find build -name "*.apk" | head -1)
-          echo "Uploading..."
-          curl --upload-file $APK_PATH https://transfer.sh/BSC-Mine-Hub.apk > link.txt
-          echo "====== YOUR DOWNLOAD LINK ======"
-          cat link.txt
-          echo "================================"
+          APK=$(find . -name "app-release.apk" | head -1)
+          curl --upload-file $APK https://transfer.sh/BSC.apk | tee link.txt
+          echo "LINK READY"
     artifacts:
       - build/**/outputs/**/*.apk
       - link.txt
