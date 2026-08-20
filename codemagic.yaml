@@ -3,7 +3,7 @@ workflows:
     name: Android Workflow
     instance_type: mac_mini_m2
     environment:
-      flutter: 3.24.5
+      flutter: 3.32.8
     scripts:
       - name: Fix deps and Create Android
         script: |
