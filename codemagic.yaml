@@ -2,28 +2,14 @@ workflows:
   android-workflow:
     name: Build APK
     instance_type: mac_mini_m2
-    max_build_duration: 30
     environment:
       flutter: stable
       java: 17
     scripts:
-      - name: Fix Ads Error in main.dart
+      - name: Build Clean V1
         script: |
-          set -e
-          cp android/app/google-services.json /tmp/g.json 2>/dev/null || cp google-services.json /tmp/g.json 2>/dev/null || echo "no gs"
-          rm -rf android
-          flutter create --org com.bscminehub --project-name bsc_mine_hub --platforms=android .
-          mkdir -p android/app && cp /tmp/g.json android/app/google-services.json 2>/dev/null || echo "gs skip"
-          # --- ASAL FIX ---
-          # 1. pubspec se ads hatao
-          sed -i '' '/google_mobile_ads/d' pubspec.yaml 2>/dev/null || sed -i '/google_mobile_ads/d' pubspec.yaml
-          # 2. main.dart se ads ka import aur code hatao
-          sed -i '' '/google_mobile_ads/d' lib/main.dart 2>/dev/null || sed -i '/google_mobile_ads/d' lib/main.dart
-          sed -i '' '/BannerAd/d;/MobileAds/d;/AdRequest/d;/AdWidget/d;/InterstitialAd/d;/RewardedAd/d' lib/main.dart 2>/dev/null || sed -i '/BannerAd/d;/MobileAds/d;/AdRequest/d;/AdWidget/d;/InterstitialAd/d;/RewardedAd/d' lib/main.dart
           flutter clean
           flutter pub get
-      - name: Build APK
-        script: |
           flutter build apk --release --no-tree-shake-icons
     artifacts:
       - build/**/outputs/**/*.apk
