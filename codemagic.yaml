@@ -7,26 +7,15 @@ workflows:
       flutter: stable
       java: 17
     scripts:
-      - name: Fix Old Project
+      - name: Update Ads Library
         script: |
-          if [ ! -f "android/app/google-services.json" ] && [ -f "google-services.json" ]; then
-            cp google-services.json android/app/google-services.json || true
-          fi
-          rm -rf android
-          flutter create --platforms=android --project-name bsc_mine_hub .
-          if [ -f "google-services.json" ]; then
-            cp google-services.json android/app/google-services.json
-          fi
-          # Agar google-services.json bilkul nahi hai to Firebase ko temporarily disable karo
-          if [ ! -f "android/app/google-services.json" ]; then
-            echo "No google-services.json found - building without Firebase"
-            find lib -type f -name "*.dart" -exec sed -i.bak "s/import.*firebase_options.*//g" {} \;
-            find lib -type f -name "*.dart" -exec sed -i.bak "s/.*Firebase.initializeApp.*//g" {} \;
-            find lib -type f -name "*.dart" -exec sed -i.bak "s/.*DefaultFirebaseOptions.*//g" {} \;
-          fi
+          # Purana google_mobile_ads update karo
+          flutter pub add google_mobile_ads:^5.1.0 || true
+          # pubspec.yaml me version force update
+          sed -i '' 's/google_mobile_ads:.*/google_mobile_ads: ^5.1.0/g' pubspec.yaml || sed -i 's/google_mobile_ads:.*/google_mobile_ads: ^5.1.0/g' pubspec.yaml
+          flutter clean
       - name: Get packages
         script: |
-          flutter clean
           flutter pub get
       - name: Build APK
         script: |
