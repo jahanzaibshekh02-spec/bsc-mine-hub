@@ -5,13 +5,21 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       flutter: stable
+      java: 17
     scripts:
+      - name: Fix Android V1 Embedding
+        script: |
+          rm -rf android/app/src/main/kotlin
+          mkdir -p android/app/src/main/kotlin/com/example/bsc_mine_hub
+          echo "package com.example.bsc_mine_hub
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity()" > android/app/src/main/kotlin/com/example/bsc_mine_hub/MainActivity.kt
       - name: Get packages
         script: |
           flutter clean
           flutter pub get
       - name: Build APK
         script: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release
     artifacts:
       - build/**/outputs/**/*.apk
