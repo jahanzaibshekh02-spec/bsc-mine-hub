@@ -5,12 +5,11 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Recreate and Inject Rewarded Ads
+      - name: Recreate and Inject Reward
         script: |
           rm -rf android
           flutter create --platforms=android .
           flutter pub add google_mobile_ads
-          
           python3 << 'PY'
           path="android/app/src/main/AndroidManifest.xml"
           txt=open(path).read()
@@ -20,51 +19,16 @@ workflows:
             txt=txt[:e+1]+'\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="'+admob+'"/>' + txt[e+1:]
             open(path,"w").write(txt)
           PY
-          
           cat > lib/main.dart << 'DART'
-          import 'dart:async';
-          import 'package:flutter/material.dart';
-          import 'package:google_mobile_ads/google_mobile_ads.dart';
-
-          void main() { WidgetsFlutterBinding.ensureInitialized(); MobileAds.instance.initialize(); runApp(BSCApp()); }
-
-          class BSCApp extends StatefulWidget { @override State<BSCApp> createState()=>_BSCAppState(); }
-          class _BSCAppState extends State<BSCApp> {
-            double balance = 0.00011; bool isMining = true; Timer? timer;
-            BannerAd? bannerAd; RewardedAd? rewardedAd;
-            final String bannerId = 'ca-app-pub-9184265616231271/7370879625'; // Aapka Banner bhi yehi use hoga filhal
-            final String rewardedId = 'ca-app-pub-9184265616231271/7370879625'; // Aapka Rewarded ID
-
-            @override void initState(){ super.initState(); loadBanner(); loadRewarded(); startMining(); }
-            void loadBanner(){ bannerAd=BannerAd(adUnitId:'ca-app-pub-3940256099942544/6300978111', size:AdSize.banner, request:AdRequest(), listener:BannerAdListener())..load(); }
-            void loadRewarded(){ RewardedAd.load(adUnitId:rewardedId, request:AdRequest(), rewardedAdLoadCallback:RewardedAdLoadCallback(onAdLoaded:(ad){rewardedAd=ad;}, onAdFailedToLoad:(e){})); }
-            void startMining(){ timer=Timer.periodic(Duration(seconds:2), (t){ if(isMining) setState(()=>balance+=0.00001); }); }
-            void claimReward(){
-              if(rewardedAd!=null){
-                rewardedAd!.fullScreenContentCallback=FullScreenContentCallback(onAdDismissedFullScreenContent:(ad){ad.dispose(); loadRewarded();});
-                rewardedAd!.show(onUserEarnedReward:(ad,reward){ setState(()=>balance+=0.00010); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('1 Coin = 0.00010 BSC Added!'))); });
-              } else { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Ad loading... try again'))); loadRewarded(); }
-            }
-            @override Widget build(BuildContext context){
-              return MaterialApp(home:Scaffold(
-                appBar:AppBar(title:Text('BSC Mine Hub'), backgroundColor:Colors.amber, centerTitle:true),
-                body:Column(children:[
-                  SizedBox(height:60),
-                  Icon(Icons.currency_bitcoin, size:90, color:Colors.amber),
-                  Text(balance.toStringAsFixed(5), style:TextStyle(fontSize:32, fontWeight:FontWeight.bold)),
-                  Text('BSC Balance'), SizedBox(height:20),
-                  ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:isMining?Colors.red:Colors.green, minimumSize:Size(220,48)), onPressed:(){setState(()=>isMining=!isMining);}, child:Text(isMining?'STOP MINING':'START MINING', style:TextStyle(color:Colors.white))),
-                  SizedBox(height:15),
-                  ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Colors.amber, minimumSize:Size(220,48)), onPressed:claimReward, child:Text('WATCH AD & CLAIM 1 COIN', style:TextStyle(color:Colors.black, fontWeight:FontWeight.bold))),
-                  Spacer(),
-                  if(bannerAd!=null) Container(height:50, child:AdWidget(ad:bannerAd!)),
-                  Padding(padding:EdgeInsets.all(8), child:Text('V1 - Reward Active', style:TextStyle(color:Colors.grey))),
-                ]),
-              ));
-            }
-          }
-          DART
-      - name: Build APK
-        script: flutter build apk --release
-    artifacts:
-      - build/**/outputs/**/*.apk
+          import 'dart:async'; import 'package:flutter/material.dart'; import 'package:google_mobile_ads/google_mobile_ads.dart';
+          void main(){WidgetsFlutterBinding.ensureInitialized(); MobileAds.instance.initialize(); runApp(BSCApp());}
+          class BSCApp extends StatefulWidget{@override State<BSCApp> createState()=>_BSCAppState();}
+          class _BSCAppState extends State<BSCApp>{
+            double balance=0.00011; bool isMining=true; Timer? timer; BannerAd? bannerAd; RewardedAd? rewardedAd;
+            double minWithdraw=0.01000; TextEditingController walletCtrl=TextEditingController();
+            final String rewardedId='ca-app-pub-9184265616231271/7370879625';
+            @override void initState(){super.initState(); BannerAd(adUnitId:'ca-app-pub-3940256099942544/6300978111',size:AdSize.banner,request:AdRequest(),listener:BannerAdListener(onAdLoaded:(ad){setState(()=>bannerAd=ad as BannerAd);}))..load(); loadRewarded(); startMining();}
+            void loadRewarded(){RewardedAd.load(adUnitId:rewardedId,request:AdRequest(),rewardedAdLoadCallback:RewardedAdLoadCallback(onAdLoaded:(ad){rewardedAd=ad;},onAdFailedToLoad:(e){}));}
+            void startMining(){timer=Timer.periodic(Duration(seconds:2),(t){if(isMining)setState(()=>balance+=0.00001);});}
+            void claimCoin(){if(rewardedAd!=null){rewardedAd!.show(onUserEarnedReward:(a,r){setState(()=>balance+=0.00010); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('1 Coin Added!')));}); rewardedAd!.fullScreenContentCallback=FullScreenContentCallback(onAdDismissedFullScreenContent:(ad){ad.dispose(); loadRewarded();});}else{ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Ad loading...'))); loadRewarded();}}
+            void showWithdraw(){showDialog(context:context,builder:(c)=>AlertDialog(title:Text('Withdraw BSC'),content:Column(mainAxisSize:MainAxisSize.min,children:[Text('Balance: ${balance.toStringAsFixed(5)} BSC\nMin: $minWithdraw'),SizedBox(height:10),TextField(controller:walletCtrl,decoration:InputDecoration(hintText:'BEP20 Address',border:OutlineInputBorder()))]),actions:[TextButton(onPressed:()=>Navigator.pop
