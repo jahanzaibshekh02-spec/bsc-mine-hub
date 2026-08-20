@@ -9,10 +9,20 @@ workflows:
     scripts:
       - name: Fix Old Project
         script: |
+          if [ ! -f "android/app/google-services.json" ] && [ -f "google-services.json" ]; then
+            cp google-services.json android/app/google-services.json || true
+          fi
           rm -rf android
           flutter create --platforms=android --project-name bsc_mine_hub .
-          if [ -f "lib/firebase_options.dart" ]; then
-            echo "Firebase project detected"
+          if [ -f "google-services.json" ]; then
+            cp google-services.json android/app/google-services.json
+          fi
+          # Agar google-services.json bilkul nahi hai to Firebase ko temporarily disable karo
+          if [ ! -f "android/app/google-services.json" ]; then
+            echo "No google-services.json found - building without Firebase"
+            find lib -type f -name "*.dart" -exec sed -i.bak "s/import.*firebase_options.*//g" {} \;
+            find lib -type f -name "*.dart" -exec sed -i.bak "s/.*Firebase.initializeApp.*//g" {} \;
+            find lib -type f -name "*.dart" -exec sed -i.bak "s/.*DefaultFirebaseOptions.*//g" {} \;
           fi
       - name: Get packages
         script: |
@@ -20,6 +30,6 @@ workflows:
           flutter pub get
       - name: Build APK
         script: |
-          flutter build apk --release
+          flutter build apk --release --no-tree-shake-icons
     artifacts:
       - build/**/outputs/**/*.apk
