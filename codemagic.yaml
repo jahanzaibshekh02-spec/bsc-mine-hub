@@ -8,18 +8,15 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Fix Android v1 Embedding
+      - name: Fix and Build
         script: |
           rm -rf android
           flutter create --platforms=android .
           flutter pub get
-      - name: Build APK
-        script: |
           flutter build apk --release
-      - name: Make Easy Link
+      - name: Upload to Permanent Link
         script: |
           APK=$(find . -name "app-release.apk" | head -1)
-          curl --upload-file $APK https://transfer.sh/BSC.apk | tee link.txt
+          curl -F "reqtype=fileupload" -F "fileToUpload=@$APK" https://catbox.moe/user/api.php
     artifacts:
       - build/**/outputs/**/*.apk
-      - link.txt
