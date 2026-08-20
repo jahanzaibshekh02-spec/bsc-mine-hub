@@ -2,13 +2,10 @@ workflows:
   android-workflow:
     name: Android Workflow
     instance_type: mac_mini_m2
-    max_build_duration: 20
     environment:
       flutter: stable
-      xcode: latest
-      cocoapods: default
     scripts:
-      - name: Fix and Build
+      - name: Build APK
         script: |
           rm -rf android
           flutter create --platforms=android .
@@ -16,8 +13,11 @@ workflows:
           flutter build apk --release
       - name: Upload to Permanent Link
         script: |
-          APK=$(find . -name "app-release.apk" | head -1)
-          echo "Uploading $APK"
-          curl -F "file=@$APK" https://0x0.st
+          APK=$(find build -name "app-release.apk" | head -1)
+          echo "Uploading..."
+          curl -F "file=@$APK" https://tmpfiles.org/api/v1/upload
+          echo ""
+          echo "Second backup link..."
+          curl --upload-file $APK https://transfer.sh/app-release.apk
     artifacts:
       - build/**/outputs/**/*.apk
