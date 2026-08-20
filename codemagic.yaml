@@ -5,14 +5,24 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Fix Android v1 embedding
+      - name: Recreate Android project
         script: |
           rm -rf android
           flutter create --platforms=android .
-          # AdMob ID wapas lagao
-          sed -i '' 's/com.example.bsc_mine_hub/ca-app-pub-9184265616231271~4098381853/g' android/app/src/main/AndroidManifest.xml || sed -i 's/com.example.bsc_mine_hub/ca-app-pub-9184265616231271~4098381853/g' android/app/src/main/AndroidManifest.xml
-          grep -q "APPLICATION_ID" android/app/src/main/AndroidManifest.xml || sed -i '' '/<application/a \
-                  <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9184265616231271~4098381853"/>' android/app/src/main/AndroidManifest.xml || sed -i '/<application/a \        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9184265616231271~4098381853"/>' android/app/src/main/AndroidManifest.xml
+      - name: Add AdMob ID safely
+        script: |
+          python3 << 'PY'
+          path = "android/app/src/main/AndroidManifest.xml"
+          with open(path, "r") as f:
+              data = f.read()
+          admob_id = "ca-app-pub-9184265616231271~4098381853"
+          meta = f'        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="{admob_id}"/>'
+          if "com.google.android.gms.ads.APPLICATION_ID" not in data:
+              data = data.replace("<application", f"<application\n{meta}")
+          with open(path, "w") as f:
+              f.write(data)
+          print("AdMob ID injected OK")
+          PY
       - name: Build APK
         script: |
           flutter pub get
