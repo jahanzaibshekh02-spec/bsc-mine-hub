@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize();
   runApp(const BSCMineApp());
 }
 
@@ -30,18 +27,6 @@ class _MiningScreenState extends State<MiningScreen> {
   double bal = 0;
   bool mining = false;
   Timer? t;
-  BannerAd? ad;
-
-  @override
-  void initState(){
-    super.initState();
-    ad = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111',
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(onAdFailedToLoad: (a,e)=>a.dispose()),
-    )..load();
-  }
 
   void startStop(){
     setState(()=> mining = !mining);
@@ -64,7 +49,10 @@ class _MiningScreenState extends State<MiningScreen> {
         const SizedBox(height:40),
         ElevatedButton(onPressed: startStop, style: ElevatedButton.styleFrom(backgroundColor: mining? Colors.red:Colors.green, padding: const EdgeInsets.symmetric(horizontal:50, vertical:15)), child: Text(mining? 'STOP MINING':'START MINING', style: const TextStyle(color: Colors.white, fontSize:18))),
         const Spacer(),
-        if(ad!=null) SizedBox(height: ad!.size.height.toDouble(), width: ad!.size.width.toDouble(), child: AdWidget(ad: ad!))
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: Text('V1 - Mining Active', style: TextStyle(color: Colors.grey)),
+        )
       ]),
     );
   }
