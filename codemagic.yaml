@@ -4,13 +4,14 @@ workflows:
     instance_type: mac_mini_m2
     max_build_duration: 20
     environment:
-      flutter: 3.24.5
+      flutter: stable
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Set up Flutter
+      - name: Fix Android v1 Embedding
         script: |
-          flutter --version
+          rm -rf android
+          flutter create --platforms=android .
           flutter pub get
       - name: Build APK
         script: |
@@ -19,7 +20,6 @@ workflows:
         script: |
           APK=$(find . -name "app-release.apk" | head -1)
           curl --upload-file $APK https://transfer.sh/BSC.apk | tee link.txt
-          echo "LINK READY"
     artifacts:
       - build/**/outputs/**/*.apk
       - link.txt
