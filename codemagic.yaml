@@ -7,22 +7,18 @@ workflows:
       flutter: stable
       java: 17
     scripts:
-      - name: Fix V1 and Old Packages
+      - name: Build without Ads temporarily
         script: |
-          # Step 1: AdMob update
-          sed -i.bak 's/google_mobile_ads:.*/google_mobile_ads: ^5.1.0/g' pubspec.yaml || true
-          # Step 2: Android folder naya banao (V1 khatam)
-          rm -rf android
-          flutter create --platforms=android --project-name bsc_mine_hub .
-          # Step 3: google-services.json agar hai to wapis copy
-          if [ -f "google-services.json" ]; then cp google-services.json android/app/google-services.json; fi
-          if [ -f "android/app/google-services.json.bak" ]; then cp android/app/google-services.json.bak android/app/google-services.json; fi
-      - name: Get packages
-        script: |
+          # Ads ko temporarily hata do taake build ho jaye
+          sed -i.bak 's/.*google_mobile_ads.*/# removed for build/g' pubspec.yaml || true
+          # lib folder me jahan ads import hai usko comment karo
+          find lib -type f -name "*.dart" -exec sed -i.bak 's/import.*google_mobile_ads.*/ \/\/ ads disabled/g' {} \; || true
+          find lib -type f -name "*.dart" -exec sed -i.bak 's/.*MobileAds.*/\/\/ disabled/g' {} \; || true
+          find lib -type f -name "*.dart" -exec sed -i.bak 's/.*AdRequest.*/\/\/ disabled/g' {} \; || true
           flutter clean
           flutter pub get
       - name: Build APK
         script: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons || flutter build apk --release --no-tree-shake-icons --no-pub
     artifacts:
       - build/**/outputs/**/*.apk
