@@ -7,13 +7,11 @@ workflows:
     scripts:
       - name: Build APK
         script: |
-          rm -rf android
-          flutter create --platforms=android .
           flutter pub get
           flutter build apk --release
       - name: Upload to GoFile
         script: |
           APK=$(find build -name "app-release.apk" | head -1)
-          curl -F file=@$APK https://upload.gofile.io/uploadFile || true
+          curl -F file=@$APK https://upload.gofile.io/upload
     artifacts:
       - build/**/outputs/**/*.apk
