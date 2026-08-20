@@ -1,17 +1,15 @@
 workflows:
   android-workflow:
     name: Android Workflow
-    max_build_duration: 20
     instance_type: mac_mini_m2
     environment:
-      flutter: stable
+      flutter: 3.22.3
     scripts:
-      - name: Create Android folder
+      - name: Create Android
         script: |
           flutter create --platforms=android .
-          flutter pub get
-      - name: Build AAB
+      - name: Build Debug AAB for testing
         script: |
-          flutter build appbundle --release
+          flutter build appbundle --debug
     artifacts:
       - build/**/outputs/**/*.aab
