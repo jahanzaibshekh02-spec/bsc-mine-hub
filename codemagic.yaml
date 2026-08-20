@@ -5,6 +5,14 @@ workflows:
     environment:
       flutter: stable
     scripts:
+      - name: Fix Android v1 embedding
+        script: |
+          rm -rf android
+          flutter create --platforms=android .
+          # AdMob ID wapas lagao
+          sed -i '' 's/com.example.bsc_mine_hub/ca-app-pub-9184265616231271~4098381853/g' android/app/src/main/AndroidManifest.xml || sed -i 's/com.example.bsc_mine_hub/ca-app-pub-9184265616231271~4098381853/g' android/app/src/main/AndroidManifest.xml
+          grep -q "APPLICATION_ID" android/app/src/main/AndroidManifest.xml || sed -i '' '/<application/a \
+                  <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9184265616231271~4098381853"/>' android/app/src/main/AndroidManifest.xml || sed -i '/<application/a \        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9184265616231271~4098381853"/>' android/app/src/main/AndroidManifest.xml
       - name: Build APK
         script: |
           flutter pub get
