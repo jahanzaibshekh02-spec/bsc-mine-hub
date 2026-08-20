@@ -1,24 +1,22 @@
 workflows:
   android-workflow:
-    name: Android APK
-    max_build_duration: 25
+    name: Build APK
+    max_build_duration: 30
     instance_type: mac_mini_m2
     environment:
       flutter: stable
       java: 17
     scripts:
-      - name: Build without Ads temporarily
+      - name: Fix V1 Embedding Forever
         script: |
-          # Ads ko temporarily hata do taake build ho jaye
-          sed -i.bak 's/.*google_mobile_ads.*/# removed for build/g' pubspec.yaml || true
-          # lib folder me jahan ads import hai usko comment karo
-          find lib -type f -name "*.dart" -exec sed -i.bak 's/import.*google_mobile_ads.*/ \/\/ ads disabled/g' {} \; || true
-          find lib -type f -name "*.dart" -exec sed -i.bak 's/.*MobileAds.*/\/\/ disabled/g' {} \; || true
-          find lib -type f -name "*.dart" -exec sed -i.bak 's/.*AdRequest.*/\/\/ disabled/g' {} \; || true
+          rm -rf android
+          flutter create --platforms=android --project-name bsc_mine_hub .
+          # Ads ko abhi band rakho taake build ho jaye
+          sed -i.bak 's/.*google_mobile_ads/# removed/g' pubspec.yaml || true
           flutter clean
           flutter pub get
       - name: Build APK
         script: |
-          flutter build apk --release --no-tree-shake-icons || flutter build apk --release --no-tree-shake-icons --no-pub
+          flutter build apk --release --no-tree-shake-icons
     artifacts:
       - build/**/outputs/**/*.apk
