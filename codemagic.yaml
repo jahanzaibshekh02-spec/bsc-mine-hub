@@ -8,6 +8,8 @@ workflows:
     scripts:
       - name: Build Clean V1
         script: |
+          rm -f pubspec.lock
+          flutter create --platforms=android .
           flutter clean
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
