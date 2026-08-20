@@ -12,14 +12,17 @@ workflows:
       - name: Add AdMob ID safely
         script: |
           python3 << 'PY'
-          p="android/app/src/main/AndroidManifest.xml"
-          t=open(p).read()
-          admob="ca-app-pub-9184265616231271~4098381853"
-          meta="<meta-data android:name='com.google.android.gms.ads.APPLICATION_ID' android:value='"+admob+"'/>"
-          if "APPLICATION_ID" not in t:
-            t=t.replace("<application", "<application\n        "+meta)
-            open(p,"w").write(t)
-          print("Fixed OK")
+          path = "android/app/src/main/AndroidManifest.xml"
+          txt = open(path).read()
+          if "APPLICATION_ID" not in txt:
+              admob_id = "ca-app-pub-9184265616231271~4098381853"
+              # find <application .... > and insert AFTER its >
+              start = txt.find("<application")
+              end = txt.find(">", start)
+              insert = '\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="' + admob_id + '"/>'
+              txt = txt[:end+1] + insert + txt[end+1:]
+              open(path, "w").write(txt)
+          print("OK injected")
           PY
       - name: Build APK
         script: |
