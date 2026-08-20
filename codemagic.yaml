@@ -9,26 +9,33 @@ workflows:
         script: |
           rm -rf android
           flutter create --platforms=android .
-          flutter pub add google_mobile_ads
+          flutter pub add google_mobile_ads url_launcher
           python3 << 'PY'
           p="android/app/src/main/AndroidManifest.xml"; t=open(p).read()
           if "APPLICATION_ID" not in t:
             adm="ca-app-pub-9184265616231271~4098381853"; s=t.find("<application"); e=t.find(">",s)
-            t=t[:e+1]+'\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="'+adm+'"/>' + t[e+1:]
+            t=t[:e+1]+'\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="'+adm+'"/>\n        <queries><package android:name="com.whatsapp" /></queries>' + t[e+1:]
             open(p,"w").write(t)
           PY
           cat > lib/main.dart << 'DART'
-          import 'dart:async'; import 'package:flutter/material.dart'; import 'package:google_mobile_ads/google_mobile_ads.dart';
+          import 'dart:async'; import 'package:flutter/material.dart'; import 'package:google_mobile_ads/google_mobile_ads.dart'; import 'package:url_launcher/url_launcher.dart';
           void main(){WidgetsFlutterBinding.ensureInitialized(); MobileAds.instance.initialize(); runApp(BSCApp());}
           class BSCApp extends StatefulWidget{@override State<BSCApp> createState()=>_BSCAppState();}
           class _BSCAppState extends State<BSCApp>{
-            double bal=0.00011; bool mine=true; Timer? tim; BannerAd? bAd; RewardedAd? rAd; TextEditingController wc=TextEditingController();
-            double minW=0.01000; String rId='ca-app-pub-9184265616231271/7370879625';
+            double bal=0.01200; bool mine=true; Timer? tim; BannerAd? bAd; RewardedAd? rAd; TextEditingController wc=TextEditingController();
+            double minW=0.01000; String rId='ca-app-pub-9184265616231271/7370879625'; String myNum='923494769780';
             @override void initState(){super.initState(); BannerAd(adUnitId:'ca-app-pub-3940256099942544/6300978111',size:AdSize.banner,request:AdRequest(),listener:BannerAdListener(onAdLoaded:(ad){setState(()=>bAd=ad as BannerAd);}))..load(); loadR(); startM();}
             void loadR(){RewardedAd.load(adUnitId:rId,request:AdRequest(),rewardedAdLoadCallback:RewardedAdLoadCallback(onAdLoaded:(ad){rAd=ad;},onAdFailedToLoad:(e){}));}
             void startM(){tim=Timer.periodic(Duration(seconds:2),(t){if(mine)setState(()=>bal+=0.00001);});}
             void claim(){if(rAd!=null){rAd!.show(onUserEarnedReward:(a,r){setState(()=>bal+=0.00010);}); rAd!.fullScreenContentCallback=FullScreenContentCallback(onAdDismissedFullScreenContent:(ad){ad.dispose(); loadR();});}else{ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Ad loading...')));}}
-            @override Widget build(BuildContext c){return MaterialApp(home:Scaffold(appBar:AppBar(title:Text('BSC Mine Hub'),backgroundColor:Colors.amber,centerTitle:true),body:Column(children:[SizedBox(height:40),Icon(Icons.currency_bitcoin,size:80,color:Colors.amber),Text(bal.toStringAsFixed(5),style:TextStyle(fontSize:34,fontWeight:FontWeight.bold)),Text('BSC Balance'),SizedBox(height:20),ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:mine?Colors.red:Colors.green,minimumSize:Size(240,48)),onPressed:()=>setState(()=>mine=!mine),child:Text(mine?'STOP MINING':'START MINING',style:TextStyle(color:Colors.white))),SizedBox(height:10),ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Colors.amber,minimumSize:Size(240,48)),onPressed:claim,child:Text('WATCH AD +0.00010',style:TextStyle(color:Colors.black,fontWeight:FontWeight.bold))),SizedBox(height:10),OutlinedButton.icon(icon:Icon(Icons.wallet),label:Text('WITHDRAW 0.01000'),onPressed:(){showDialog(context:c,builder:(_)=>AlertDialog(title:Text('Withdraw'),content:TextField(controller:wc,decoration:InputDecoration(hintText:'BEP20 Address')),actions:[TextButton(onPressed:(){if(bal>=minW){setState(()=>bal=0); Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Sent!')));} },child:Text('CONFIRM'))]));}),Spacer(),if(bAd!=null)Container(height:50,child:AdWidget(ad:bAd!))])));}
+            Future<void> withdraw() async {
+              if(bal < minW){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Min Withdraw $minW BSC'))); return; }
+              if(wc.text.length < 10){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Wallet Address Dalain'))); return; }
+              String msg = "NEW WITHDRAW REQUEST%0A%0AAmount: ${bal.toStringAsFixed(5)} BSC%0AWallet: ${wc.text}%0AApp: BSC Mine Hub";
+              Uri url = Uri.parse("https://wa.me/$myNum?text=$msg");
+              if(await canLaunchUrl(url)){ await launchUrl(url, mode: LaunchMode.externalApplication); setState(()=>bal=0); Navigator.pop(context); }
+            }
+            @override Widget build(BuildContext c){return MaterialApp(home:Scaffold(appBar:AppBar(title:Text('BSC Mine Hub'),backgroundColor:Colors.amber,centerTitle:true),body:Column(children:[SizedBox(height:40),Icon(Icons.currency_bitcoin,size:80,color:Colors.amber),Text(bal.toStringAsFixed(5),style:TextStyle(fontSize:34,fontWeight:FontWeight.bold)),Text('BSC Balance'),SizedBox(height:20),ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:mine?Colors.red:Colors.green,minimumSize:Size(240,48)),onPressed:()=>setState(()=>mine=!mine),child:Text(mine?'STOP MINING':'START MINING',style:TextStyle(color:Colors.white))),SizedBox(height:10),ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Colors.amber,minimumSize:Size(240,48)),onPressed:claim,child:Text('WATCH AD +0.00010',style:TextStyle(color:Colors.black,fontWeight:FontWeight.bold))),SizedBox(height:10),OutlinedButton.icon(icon:Icon(Icons.wallet),label:Text('WITHDRAW ${minW.toStringAsFixed(5)}'),onPressed:(){showDialog(context:c,builder:(_)=>AlertDialog(title:Text('Withdraw'),content:TextField(controller:wc,decoration:InputDecoration(hintText:'BEP20 Address')),actions:[TextButton(onPressed:withdraw,child:Text('CONFIRM & SEND WHATSAPP'))]));}),Spacer(),if(bAd!=null)Container(height:50,child:AdWidget(ad:bAd!))])));}
           }
           DART
       - name: Build APK
