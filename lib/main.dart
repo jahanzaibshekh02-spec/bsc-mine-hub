@@ -1,51 +1,31 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const SparkApp());
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: SparkMiner()));
 }
 
-class SparkApp extends StatelessWidget {
-  const SparkApp({super.key});
-
+class SparkMiner extends StatefulWidget {
+  const SparkMiner({super.key});
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'SPARK Miner PRO',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Color(0xFF0A0E1A),
-      ),
-      home: const MinerScreen(),
-    );
-  }
+  State<SparkMiner> createState() => _SparkMinerState();
 }
 
-class MinerScreen extends StatefulWidget {
-  const MinerScreen({super.key});
-
-  @override
-  State<MinerScreen> createState() => _MinerScreenState();
-}
-
-class _MinerScreenState extends State<MinerScreen> {
-  double balance = 1247.5000;
-  double hashRate = 45.8;
-  bool mining = false;
+class _SparkMinerState extends State<SparkMiner> {
+  double balance = 5.75;
+  double hashRate = 125.0;
+  bool isMining = true;
+  int selectedIndex = 0;
   Timer? timer;
 
-  void toggleMining() {
-    setState(() {
-      mining = !mining;
-      if (mining) {
-        timer = Timer.periodic(Duration(seconds: 1), (t) {
-          setState(() {
-            balance += 0.0025;
-            hashRate = 44 + (t.tick % 5);
-          });
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (isMining) {
+        setState(() {
+          balance += 0.00025;
         });
-      } else {
-        timer?.cancel();
       }
     });
   }
@@ -53,66 +33,65 @@ class _MinerScreenState extends State<MinerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('⚡️ SPARK MINER PRO', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Color(0xFF0A0E1A),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(25),
-              decoration: BoxDecoration(
-                color: Color(0xFF1A2332),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Color(0xFF00FF88).withOpacity(0.3)),
-              ),
-              child: Column(
-                children: [
-                  Text('TOTAL BALANCE', style: TextStyle(color: Colors.white54, letterSpacing: 1)),
-                  SizedBox(height: 10),
-                  Text('${balance.toStringAsFixed(4)} BSC', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-                  SizedBox(height: 10),
-                  Text('≈ \$${(balance * 650).toStringAsFixed(2)}', style: TextStyle(color: Color(0xFF00FF88))),
-                ],
-              ),
-            ),
-            SizedBox(height: 30),
-            Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(color: Color(0xFF1A2332), borderRadius: BorderRadius.circular(15)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(children: [Text('Hash Rate'), Text('$hashRate MH/s', style: TextStyle(color: Color(0xFF00FF88), fontWeight: FontWeight.bold))]),
-                  Column(children: [Text('Miners'), Text('1,247 Active', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))]),
-                ],
-              ),
-            ),
-            Spacer(),
-            Icon(Icons.memory, size: 100, color: mining ? Color(0xFF00FF88) : Colors.white24),
-            SizedBox(height: 10),
-            Text(mining ? 'MINING IS ACTIVE' : 'MINING STOPPED', style: TextStyle(color: mining ? Color(0xFF00FF88) : Colors.white38, letterSpacing: 2, fontWeight: FontWeight.bold)),
-            Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                onPressed: toggleMining,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: mining ? Colors.redAccent : Color(0xFF00FF88),
-                  foregroundColor: mining ? Colors.white : Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                ),
-                child: Text(mining ? '🛑 STOP MINING' : '⚡️ START MINING', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
+      backgroundColor: const Color(0xFF080A0F),
+      body: selectedIndex == 0 ? buildMine() : selectedIndex == 1 ? buildRefer() : buildWallet(),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF11161F),
+        selectedItemColor: const Color(0xFFFFD700),
+        unselectedItemColor: Colors.white54,
+        currentIndex: selectedIndex,
+        onTap: (i) => setState(() => selectedIndex = i),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.memory), label: 'MINE'),
+          BottomNavigationBarItem(icon: Icon(Icons.group_add), label: 'REFER'),
+          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'WALLET'),
+        ],
       ),
     );
   }
-}
+
+  Widget buildMine() {
+    return SafeArea(
+      child: Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const Text('SPARK MINER PRO', style: TextStyle(color: Color(0xFFFFD700), fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 2)),
+          const SizedBox(height: 30),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFFD700), width: 3), boxShadow: [BoxShadow(color: Colors.amber.withOpacity(0.3), blurRadius: 30)]),
+            child: Icon(Icons.bolt, size: 80, color: isMining ? const Color(0xFFFFD700) : Colors.grey),
+          ),
+          const SizedBox(height: 20),
+          Text('${balance.toStringAsFixed(5)} BSC', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+          Text('${hashRate.toStringAsFixed(1)} H/s', style: const TextStyle(color: Colors.white54)),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: isMining ? Colors.red : const Color(0xFFFFD700), foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
+            onPressed: () => setState(() => isMining = !isMining),
+            child: Text(isMining ? 'STOP MINING' : 'START MINING', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget buildRefer() {
+    return const SafeArea(child: Center(child: Text('Invite & Earn 10% Commission', style: TextStyle(color: Colors.white, fontSize: 18))));
+  }
+
+  // YE HAI PRO WALLET
+  Widget buildWallet() {
+    final addrController = TextEditingController();
+    return SafeArea(
+      child: ListView(padding: const EdgeInsets.all(20), children: [
+        const Text('WALLET & WITHDRAW', style: TextStyle(color: Color(0xFFFFD700), fontSize: 22, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: const Color(0xFF11161F), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.amber.withOpacity(0.3))),
+          child: Column(children: [
+            Row(children: [const Text('Available to Withdraw', style: TextStyle(color: Colors.white54)), const Spacer(), Text('${balance.toStringAsFixed(2)} BSC', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold))]),
+          ]),
+        ),
+        const SizedBox(height: 20),
+        TextField(controller: addrController, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: 'Enter BEP20 (0x...) Address', hintStyle: const TextStyle(color: Colors.white38), filled: true, fillColor: const Color(0xFF11161F),
