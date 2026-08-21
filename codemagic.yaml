@@ -1,30 +1,49 @@
- workflows:
+workflows:
   android-workflow:
-    name: Fixed Build Final
+    name: android-workflow
     max_build_duration: 20
-    instance_type: mac_mini_m2
+    instance_type: linux_x2
     environment:
       flutter: stable
-      xcode: latest
-      cocoapods: default
     scripts:
-      - name: Build APK
+      - name: Build APK with Ad
         script: |
           rm -rf android
-          flutter clean
           flutter create --platforms=android .
-          flutter pub add url_launcher
+          mkdir -p lib
           cat > lib/main.dart << 'EOF'
-          import 'dart:async';
           import 'package:flutter/material.dart';
           import 'package:url_launcher/url_launcher.dart';
-          void main()=>runApp(MaterialApp(debugShowCheckedModeBanner:false,home:Home()));
-          class Home extends StatefulWidget{State<Home> createState()=>_Home();}
-          class _Home extends State<Home>{
-            double bal=0.01200; bool mining=true; int ads=0;
-            var wallet=TextEditingController();
-            String myAdLink="https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f";
-            void initState(){super.initState(); Timer.periodic(Duration(seconds:2),(t){if(mining)setState(()=>bal+=0.00001);});}
-            Future<void> watchAd() async { await launchUrl(Uri.parse(myAdLink), mode: LaunchMode.externalApplication); setState((){bal+=0.00010; ads++;}); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Ad Reward +0.00010 Added")));}
-            void withdraw(){ if(bal<0.05){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Minimum 0.05 BSC Required"))); return;} showDialog(context:context, builder:(_)=>AlertDialog(title:Text("Free Withdraw"), content:TextField(controller:wallet, decoration:InputDecoration(hintText:"0x... BEP20 Wallet", border:OutlineInputBorder())), actions:[ElevatedButton(onPressed:() async { var msg="*FREE WITHDRAW*%0ABalance: ${bal.toStringAsFixed(5)}%0AWallet: ${wallet.text}%0AAds Watched: $ads"; await launchUrl(Uri.parse("https://wa.me/923494769780?text=$msg"), mode:LaunchMode.externalApplication); setState(()=>bal=0); Navigator.pop(context); }, child:Text("SEND"))]));}
-            @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text("BSC Mine Hub - Free"), backgroundColor:Colors.orange, centerTitle:true), body:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center, children:[Icon(Icons.currency_bitcoin, size:90, color:Colors.orange), SizedBox(height:10), Text(bal.toStringAsFixed(5), style:TextStyle(fontSize:36, fontWeight:FontWeight.bold)), Text("BSC", style:TextStyle
+          void main() => runApp(BscApp());
+          class BscApp extends StatefulWidget { @override State<BscApp> createState() => _BscAppState(); }
+          class _BscAppState extends State<BscApp> {
+            double balance = 0.0;
+            Future<void> watchAd() async {
+              final url = Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f');
+              if (await canLaunchUrl(url)) { await launchUrl(url, mode: LaunchMode.externalApplication); }
+              setState(() { balance += 0.00010; });
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('+ \$0.00010 Added')));
+            }
+            @override Widget build(BuildContext context) {
+              return MaterialApp(home: Scaffold(
+                backgroundColor: Color(0xFF0B0E14),
+                appBar: AppBar(title: Text('BSC Mine Hub - Earn'), backgroundColor: Colors.orange),
+                body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text('Balance', style: TextStyle(color: Colors.white70)),
+                  Text('\$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.orange, fontSize: 40, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 20),
+                  ElevatedButton(onPressed: watchAd, style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
+                  child: Text('WATCH AD +0.00010', style: TextStyle(fontSize: 18))),
+                  SizedBox(height: 10),
+                  Text('Click karne par aapki Ad khulegi', style: TextStyle(color: Colors.white54))
+                ])),
+              ));
+            }
+          }
+          EOF
+          flutter pub add url_launcher
+          flutter clean
+          flutter pub get
+          flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
