@@ -5,7 +5,7 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Build APK with Ad + Permission Fix
+      - name: Fix Ad Not Opening
         script: |
           rm -rf android
           flutter create --platforms=android .
@@ -16,36 +16,62 @@ workflows:
           void main() => runApp(BscApp());
           class BscApp extends StatefulWidget { @override State<BscApp> createState() => _BscAppState(); }
           class _BscAppState extends State<BscApp> {
-            double balance = 0.0;
+            double balance = 0.00330;
+            final double minWithdraw = 5.00;
             Future<void> watchAd() async {
-              final url = Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f');
-              if (await canLaunchUrl(url)) { await launchUrl(url, mode: LaunchMode.externalApplication); }
+              final Uri url = Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f');
+              try {
+                // Try 1: External Browser (Best for Adsterra)
+                bool launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+                if(!launched){
+                  // Try 2: In-App Browser as fallback
+                  await launchUrl(url, mode: LaunchMode.inAppBrowserView);
+                }
+              } catch(e){
+                // Try 3: Last fallback
+                await launchUrl(url, mode: LaunchMode.platformDefault);
+              }
               setState(() { balance += 0.00010; });
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('+ \$0.00010 Added')));
+              if(mounted){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ad Opened! + \$0.00010 Added'))); }
+            }
+            void showWithdrawDialog() {
+              TextEditingController acc = TextEditingController(); String method = 'Easypaisa';
+              showDialog(context: context, builder: (ctx) => StatefulBuilder(builder: (c, s) => AlertDialog(
+                backgroundColor: Color(0xFF1E232F), title: Text('Withdraw \$5', style: TextStyle(color: Colors.white)),
+                content: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text('Balance: \$${balance.toStringAsFixed(5)}', style: TextStyle(color: balance >= minWithdraw ? Colors.greenAccent : Colors.redAccent)),
+                  DropdownButton<String>(value: method, dropdownColor: Color(0xFF1E232F), style: TextStyle(color: Colors.white), isExpanded: true,
+                    items: ['Easypaisa','JazzCash','Binance'].map((e)=>DropdownMenuItem(value:e, child:Text(e))).toList(), onChanged: (v){ s(()=> method = v!); }),
+                  TextField(controller: acc, style: TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Account / Wallet', labelStyle: TextStyle(color: Colors.white54)))
+                ]),
+                actions: [ TextButton(onPressed: ()=> Navigator.pop(ctx), child: Text('Cancel')), ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.orange), onPressed: (){
+                  if(balance < minWithdraw){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Need \$5 to withdraw'))); return; }
+                  Navigator.pop(ctx); setState(()=> balance = 0);
+                }, child: Text('Request'))],
+              )));
             }
             @override Widget build(BuildContext context) {
               return MaterialApp(home: Scaffold(
-                backgroundColor: Color(0xFF0B0E14),
-                appBar: AppBar(title: Text('BSC Mine Hub - Earn'), backgroundColor: Colors.orange),
+                backgroundColor: Color(0xFF0B0E14), appBar: AppBar(title: Text('BSC Mine Hub'), backgroundColor: Colors.orange, actions: [IconButton(icon: Icon(Icons.wallet), onPressed: showWithdrawDialog)]),
                 body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text('Balance', style: TextStyle(color: Colors.white70)),
-                  Text('\$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.orange, fontSize: 40, fontWeight: FontWeight.bold)),
+                  Text('\$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.orange, fontSize: 44, fontWeight: FontWeight.bold)),
                   SizedBox(height: 20),
-                  ElevatedButton(onPressed: watchAd, style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
-                  child: Text('WATCH AD +0.00010', style: TextStyle(fontSize: 18))),
-                  SizedBox(height: 10),
-                  Text('Click karne par aapki Ad khulegi', style: TextStyle(color: Colors.white54))
+                  ElevatedButton(onPressed: watchAd, style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, padding: EdgeInsets.symmetric(horizontal: 50, vertical: 18)),
+                    child: Text('WATCH AD +0.00010', style: TextStyle(fontSize: 18))),
+                  TextButton(onPressed: showWithdrawDialog, child: Text('Withdraw Min \$5'))
                 ])),
               ));
             }
           }
           EOF
-          # --- INTERNET PERMISSION FIX ---
-          sed -i 's/<manifest/<manifest xmlns:tools="http:\/\/schemas.android.com\/tools"/' android/app/src/main/AndroidManifest.xml
-          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET" \/>\n    <application/' android/app/src/main/AndroidManifest.xml
+          # --- PERMANENT FIX FOR AD NOT OPENING ---
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          # 1. Internet Permission
+          sed -i 's/<manifest/<manifest xmlns:tools="http:\/\/schemas.android.com\/tools"/' $MANIFEST
+          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" \/>\n    <application/' $MANIFEST
+          # 2. Add Queries for Android 11+ (This was missing)
+          sed -i 's|</manifest>|  <queries>\n    <intent>\n      <action android:name="android.intent.action.VIEW" />\n      <data android:scheme="https" />\n    </intent>\n  </queries>\n</manifest>|' $MANIFEST
           flutter pub add url_launcher
-          flutter clean
-          flutter pub get
           flutter build apk --release --split-per-abi
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
