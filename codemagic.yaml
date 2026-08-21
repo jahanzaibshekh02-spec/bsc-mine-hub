@@ -1,36 +1,34 @@
 workflows:
   android-workflow:
-    name: Android Workflow
+    name: Free Withdraw Build
+    max_build_duration: 20
     instance_type: mac_mini_m2
     environment:
       flutter: stable
+      xcode: latest
+      cocoapods: default
     scripts:
-      - name: Free Withdraw Build
+      - name: Build APK
         script: |
-          rm -rf android lib
+          flutter clean
           flutter create --platforms=android .
           flutter pub add url_launcher
-          cat > lib/main.dart << 'DART'
-          import 'dart:async'; import 'package:flutter/material.dart'; import 'package:url_launcher/url_launcher.dart';
+          cat > lib/main.dart << 'EOF'
+          import 'dart:async';
+          import 'package:flutter/material.dart';
+          import 'package:url_launcher/url_launcher.dart';
           void main()=>runApp(MaterialApp(debugShowCheckedModeBanner:false,home:Home()));
-          class Home extends StatefulWidget{State<Home> createState()=>_S();}
-          class _S extends State<Home>{
-            double b=0.01200; bool m=true; Timer? t; var wc=TextEditingController(); int adCount=0;
-            String adLink = "https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f";
-            void initState(){super.initState(); t=Timer.periodic(Duration(seconds:2),(_){if(m)setState(()=>b+=0.00001);});}
-            void _watchAd() async {
-              await launchUrl(Uri.parse(adLink), mode: LaunchMode.externalApplication);
-              await Future.delayed(Duration(seconds:1));
-              if(!mounted) return;
-              showDialog(context:context, builder:(_)=>AlertDialog(
-                title:Text('Reward Ready!'), content:Text('Ad dekhne ke liye shukriya. Claim dabao.'),
-                actions:[ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Colors.green,minimumSize:Size(double.infinity,48)), onPressed:(){Navigator.pop(context); setState((){b+=0.00010; adCount++;}); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(' +0.00010 BSC Added!')));}, child:Text('CLAIM +0.00010',style:TextStyle(color:Colors.white)))],
-              ));
-            }
-            void _withdraw() {
-              if(b < 0.05){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Minimum 0.05 BSC required. Keep mining & watching ads!'))); return; }
-              showDialog(context:context, builder:(_)=>AlertDialog(
-                title:Text('Free Withdraw'),
-                content:Column(mainAxisSize:MainAxisSize.min, children:[
-                  Text('Balance: ${b.toStringAsFixed(5)} BSC', style:TextStyle(fontWeight:FontWeight.bold)),
-                 
+          class Home extends StatefulWidget{State<Home> createState()=>_Home();}
+          class _Home extends State<Home>{
+            double bal=0.01200; bool mining=true; int ads=0;
+            var wallet=TextEditingController();
+            String myAdLink="https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f";
+            void initState(){super.initState(); Timer.periodic(Duration(seconds:2),(t){if(mining)setState(()=>bal+=0.00001);});}
+            Future<void> watchAd() async { await launchUrl(Uri.parse(myAdLink), mode: LaunchMode.externalApplication); setState((){bal+=0.00010; ads++;}); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Ad Reward +0.00010 Added")));}
+            void withdraw(){ if(bal<0.05){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Minimum 0.05 BSC Required"))); return;} showDialog(context:context, builder:(_)=>AlertDialog(title:Text("Free Withdraw"), content:TextField(controller:wallet, decoration:InputDecoration(hintText:"0x... BEP20 Wallet", border:OutlineInputBorder())), actions:[ElevatedButton(onPressed:() async { var msg="*FREE WITHDRAW*%0ABalance: ${bal.toStringAsFixed(5)}%0AWallet: ${wallet.text}%0AAds Watched: $ads"; await launchUrl(Uri.parse("https://wa.me/923494769780?text=$msg"), mode:LaunchMode.externalApplication); setState(()=>bal=0); Navigator.pop(context); }, child:Text("SEND"))]));}
+            @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text("BSC Mine Hub - Free"), backgroundColor:Colors.orange, centerTitle:true), body:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center, children:[Icon(Icons.currency_bitcoin, size:90, color:Colors.orange), SizedBox(height:10), Text(bal.toStringAsFixed(5), style:TextStyle(fontSize:36, fontWeight:FontWeight.bold)), Text("BSC", style:TextStyle(color:Colors.grey)), SizedBox(height:20), ElevatedButton(onPressed:()=>setState(()=>mining=!mining), child:Text(mining?"STOP MINING":"START MINING")), SizedBox(height:15), ElevatedButton(onPressed:watchAd, style:ElevatedButton.styleFrom(backgroundColor:Colors.amber, minimumSize:Size(260,55)), child:Text("WATCH AD +0.00010", style:TextStyle(color:Colors.black, fontWeight:FontWeight.bold, fontSize:16))), SizedBox(height:10), OutlinedButton(onPressed:withdraw, child:Text("FREE WITHDRAW")), SizedBox(height:20), Text("Ads Watched: $ads", style:TextStyle(color:Colors.green))])));}
+          }
+          EOF
+          flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
