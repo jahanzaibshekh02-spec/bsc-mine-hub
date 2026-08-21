@@ -5,7 +5,7 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Fix and Build
+      - name: Build Full App
         script: |
           rm -rf android
           flutter create --platforms=android .
@@ -14,16 +14,28 @@ workflows:
           import pathlib
           p=pathlib.Path("android/app/src/main/AndroidManifest.xml")
           t=p.read_text()
+          adm="ca-app-pub-9184265616231271~4098381853"
           if "APPLICATION_ID" not in t:
-              adm="ca-app-pub-9184265616231271~4098381853"
               t=t.replace("<application", f'<queries><package android:name="com.whatsapp" /></queries>\n    <application', 1)
-              idx=t.find("<application>") 
-              if idx==-1: idx=t.find("<application")
-              e=t.find(">",idx)
-              meta=f'\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="{adm}"/>'
-              t=t[:e+1]+meta+t[e+1:]
+              e=t.find(">", t.find("<application"))
+              t=t[:e+1]+f'\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="{adm}"/>' + t[e+1:]
               p.write_text(t)
           PY
           cat > lib/main.dart << 'DART'
           import 'dart:async'; import 'package:flutter/material.dart'; import 'package:google_mobile_ads/google_mobile_ads.dart'; import 'package:url_launcher/url_launcher.dart';
-         
+          void main(){WidgetsFlutterBinding.ensureInitialized(); MobileAds.instance.initialize(); runApp(BSCApp());}
+          class BSCApp extends StatefulWidget{@override State<BSCApp> createState()=>_BSCAppState();}
+          class _BSCAppState extends State<BSCApp>{
+            double bal=0.01200; bool mine=true; Timer? tim; BannerAd? bAd; RewardedAd? rAd; TextEditingController wc=TextEditingController();
+            String rId='ca-app-pub-9184265616231271/7370879625'; String myNum='923494769780';
+            @override void initState(){super.initState(); _loadBanner(); _loadReward(); tim=Timer.periodic(Duration(seconds:2),(t){if(mine) setState(()=>bal+=0.00001);});}
+            void _loadBanner(){BannerAd(adUnitId:'ca-app-pub-3940256099942544/6300978111',size:AdSize.banner,request:AdRequest(),listener:BannerAdListener(onAdLoaded:(a){setState(()=>bAd=a as BannerAd);} ))..load();}
+            void _loadReward(){RewardedAd.load(adUnitId:rId,request:AdRequest(),rewardedAdLoadCallback:RewardedAdLoadCallback(onAdLoaded:(a){rAd=a;},onAdFailedToLoad:(e){}));}
+            void _claim(){if(rAd!=null){rAd!.show(onUserEarnedReward:(a,r){setState(()=>bal+=0.00010);}); rAd!.fullScreenContentCallback=FullScreenContentCallback(onAdDismissedFullScreenContent:(ad){ad.dispose(); _loadReward();});} else {ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Ad Loading... Try Again')));}}
+            Future<void> _withdraw() async {if(bal<0.01){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Min 0.01 BSC'))); return;} if(wc.text.length<10){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Wallet Dalain'))); return;} final msg="*NEW WITHDRAW*%0AAmount: ${bal.toStringAsFixed(5)} BSC%0AWallet: ${wc.text}"; final uri=Uri.parse("https://wa.me/$myNum?text=$msg"); await launchUrl(uri,mode:LaunchMode.externalApplication); setState(()=>bal=0); Navigator.pop(context);}
+            @override Widget build(BuildContext c){return MaterialApp(home:Scaffold(appBar:AppBar(title:Text('BSC Mine Hub'),backgroundColor:Colors.amber,centerTitle:true),body:Column(children:[SizedBox(height:30),Icon(Icons.currency_bitcoin,size:80,color:Colors.amber),Text(bal.toStringAsFixed(5),style:TextStyle(fontSize:34,fontWeight:FontWeight.bold)),Text('BSC Balance'),SizedBox(height:20),ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:mine?Colors.red:Colors.green,minimumSize:Size(240,48)),onPressed:()=>setState(()=>mine=!mine),child:Text(mine?'STOP MINING':'START MINING',style:TextStyle(color:Colors.white))),SizedBox(height:10),ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Colors.amber,minimumSize:Size(240,48)),onPressed:_claim,child:Text('WATCH AD +0.00010',style:TextStyle(color:Colors.black,fontWeight:FontWeight.bold))),SizedBox(height:10),OutlinedButton.icon(icon:Icon(Icons.wallet),label:Text('WITHDRAW'),onPressed:(){showDialog(context:c,builder:(_)=>AlertDialog(title:Text('Withdraw'),content:TextField(controller:wc,decoration:InputDecoration(hintText:'BEP20 Address')),actions:[TextButton(onPressed:_withdraw,child:Text('SEND TO WHATSAPP'))]));}),Spacer(),if(bAd!=null)SizedBox(height:50,child:AdWidget(ad:bAd!))])));}
+          }
+          DART
+          flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
