@@ -1,5 +1,5 @@
 workflows:
-  android-simulator-build:
+  android-workflow:
     name: SIMULATOR BUILD FIVERR SAFE
     instance_type: mac_mini_m2
     max_build_duration: 30
@@ -7,14 +7,15 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      java: 17
     scripts:
-      - name: Clean
+      - name: Clean Project
         script: |
           flutter clean
           flutter pub get
-      - name: Build APK
+      - name: Build APK Release
         script: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons --verbose
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
     publishing:
