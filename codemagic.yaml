@@ -1,6 +1,6 @@
 workflows:
   android-workflow:
-    name: Free Withdraw Build
+    name: Fixed Build Final
     max_build_duration: 20
     instance_type: mac_mini_m2
     environment:
@@ -10,6 +10,7 @@ workflows:
     scripts:
       - name: Build APK
         script: |
+          rm -rf android
           flutter clean
           flutter create --platforms=android .
           flutter pub add url_launcher
@@ -26,9 +27,4 @@ workflows:
             void initState(){super.initState(); Timer.periodic(Duration(seconds:2),(t){if(mining)setState(()=>bal+=0.00001);});}
             Future<void> watchAd() async { await launchUrl(Uri.parse(myAdLink), mode: LaunchMode.externalApplication); setState((){bal+=0.00010; ads++;}); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Ad Reward +0.00010 Added")));}
             void withdraw(){ if(bal<0.05){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("Minimum 0.05 BSC Required"))); return;} showDialog(context:context, builder:(_)=>AlertDialog(title:Text("Free Withdraw"), content:TextField(controller:wallet, decoration:InputDecoration(hintText:"0x... BEP20 Wallet", border:OutlineInputBorder())), actions:[ElevatedButton(onPressed:() async { var msg="*FREE WITHDRAW*%0ABalance: ${bal.toStringAsFixed(5)}%0AWallet: ${wallet.text}%0AAds Watched: $ads"; await launchUrl(Uri.parse("https://wa.me/923494769780?text=$msg"), mode:LaunchMode.externalApplication); setState(()=>bal=0); Navigator.pop(context); }, child:Text("SEND"))]));}
-            @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text("BSC Mine Hub - Free"), backgroundColor:Colors.orange, centerTitle:true), body:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center, children:[Icon(Icons.currency_bitcoin, size:90, color:Colors.orange), SizedBox(height:10), Text(bal.toStringAsFixed(5), style:TextStyle(fontSize:36, fontWeight:FontWeight.bold)), Text("BSC", style:TextStyle(color:Colors.grey)), SizedBox(height:20), ElevatedButton(onPressed:()=>setState(()=>mining=!mining), child:Text(mining?"STOP MINING":"START MINING")), SizedBox(height:15), ElevatedButton(onPressed:watchAd, style:ElevatedButton.styleFrom(backgroundColor:Colors.amber, minimumSize:Size(260,55)), child:Text("WATCH AD +0.00010", style:TextStyle(color:Colors.black, fontWeight:FontWeight.bold, fontSize:16))), SizedBox(height:10), OutlinedButton(onPressed:withdraw, child:Text("FREE WITHDRAW")), SizedBox(height:20), Text("Ads Watched: $ads", style:TextStyle(color:Colors.green))])));}
-          }
-          EOF
-          flutter build apk --release
-    artifacts:
-      - build/app/outputs/flutter-apk/app-release.apk
+            @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text("BSC Mine Hub - Free"), backgroundColor:Colors.orange, centerTitle:true), body:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center, children:[Icon(Icons.currency_bitcoin, size:90, color:Colors.orange), SizedBox(height:10), Text(bal.toStringAsFixed(5), style:TextStyle(fontSize:36, fontWeight:FontWeight.bold)), Text("BSC", style:TextStyle
