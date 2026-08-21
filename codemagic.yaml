@@ -5,7 +5,7 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Build APK with Ad
+      - name: Build APK with Ad + Permission Fix
         script: |
           rm -rf android
           flutter create --platforms=android .
@@ -40,9 +40,12 @@ workflows:
             }
           }
           EOF
+          # --- INTERNET PERMISSION FIX ---
+          sed -i 's/<manifest/<manifest xmlns:tools="http:\/\/schemas.android.com\/tools"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET" \/>\n    <application/' android/app/src/main/AndroidManifest.xml
           flutter pub add url_launcher
           flutter clean
           flutter pub get
-          flutter build apk --release
+          flutter build apk --release --split-per-abi
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
