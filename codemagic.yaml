@@ -5,7 +5,7 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: SPIN REFERRAL PRO BUILD
+      - name: FIX WITHDRAW + SPIN
         script: |
           rm -rf android
           flutter create --platforms=android .
@@ -19,72 +19,68 @@ workflows:
           void main() => runApp(BscApp());
           class BscApp extends StatefulWidget { @override State<BscApp> createState() => _BscAppState(); }
           class _BscAppState extends State<BscApp> {
-            double balance = 0.00340; int spinsLeft = 3;
+            double balance = 0.00410; int spinsLeft = 3;
             final String botToken = '8905610310:AAGH4yneCTPSbHq2bJfZl-ArruZ6OJa-LzY';
             final String chatId = '8296278042';
             Future<void> watchAd({double reward = 0.00010}) async {
               final Uri url = Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f');
               try { await launchUrl(url, mode: LaunchMode.externalApplication); } catch(e){ await launchUrl(url, mode: LaunchMode.inAppBrowserView); }
-              setState(() { balance += reward; });
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('+\$${reward.toStringAsFixed(5)} Added!')));
+              setState(() { balance += reward; spinsLeft++; });
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('+\$${reward.toStringAsFixed(5)} & +1 Spin!')));
             }
             Future<void> sendToTelegram(String method, String account) async {
-              String msg = "🚀 NEW WITHDRAW%0AAmount: \$5.00%0AMethod: $method%0AAccount: $account%0ABalance: \$${balance.toStringAsFixed(5)}%0ATime: ${DateTime.now()}";
+              String msg = "🚀 NEW WITHDRAW%0AAmount: \$${balance.toStringAsFixed(5)}%0AMethod: $method%0AAccount: $account%0ATime: ${DateTime.now()}";
               var url = Uri.parse("https://api.telegram.org/bot$botToken/sendMessage?chat_id=$chatId&text=$msg");
-              try{ await http.get(url); }catch(e){}
+              try{ await http.get(url); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Sent to Telegram!'))); }catch(e){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); }
             }
             void spinWheel() {
-              if(spinsLeft <= 0){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No Spins Left! Watch 1 Ad to get 1 Spin'))); return; }
-              List<double> rewards = [0.00020, 0.00050, 0.00100, 0.00200, 0.00010, 0.00030];
+              if(spinsLeft <= 0){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No Spins! Watch Ad for 1 Free Spin'))); return; }
+              List<double> rewards = [0.00020, 0.00050, 0.00100, 0.00200];
               double win = rewards[Random().nextInt(rewards.length)];
+              setState((){ balance+=win; spinsLeft--; });
               showDialog(context: context, builder: (ctx) => AlertDialog(
-                backgroundColor: Color(0xFF1E232F), title: Text('🎉 You Won!', style: TextStyle(color: Colors.white)),
-                content: Text('\$${win.toStringAsFixed(5)}', style: TextStyle(color: Colors.orange, fontSize: 32, fontWeight: FontWeight.bold)),
-                actions: [ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.orange), onPressed: (){ Navigator.pop(ctx); setState((){ balance+=win; spinsLeft--; }); watchAd(reward: 0); }, child: Text('Collect + Watch Ad'))],
+                backgroundColor: Color(0xFF1E232F), title: Text('🎉 You Won \$${win.toStringAsFixed(5)}', style: TextStyle(color: Colors.white)),
+                content: Text('New Balance: \$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                actions: [ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.orange), onPressed: (){ Navigator.pop(ctx); watchAd(reward: 0); }, child: Text('OK + Watch Ad'))],
               ));
             }
-            void referEarn(){ Share.share('💰 BSC Mine Hub - Earn Real Money!\nMy Refer Code: BSC${Random().nextInt(9000)+1000}\nDownload Now: https://play.google.com/store/apps/details?id=com.bscmine.hub'); setState(()=>balance+=0.00020); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Refer Shared! Bonus Added'))); }
             void withdraw() {
               TextEditingController acc = TextEditingController(); String m = 'Easypaisa';
               showDialog(context: context, builder: (ctx) => StatefulBuilder(builder: (c,s)=>AlertDialog(
-                backgroundColor: Color(0xFF1E232F), title: Text('Withdraw \$5', style: TextStyle(color: Colors.white)),
+                backgroundColor: Color(0xFF1E232F), title: Text('Withdraw', style: TextStyle(color: Colors.white)),
                 content: Column(mainAxisSize: MainAxisSize.min, children:[
-                  Text('Balance: \$${balance.toStringAsFixed(5)}', style: TextStyle(color: balance >= 5 ? Colors.greenAccent:Colors.redAccent, fontWeight: FontWeight.bold)),
+                  Text('Balance: \$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
                   SizedBox(height:10),
                   DropdownButton<String>(value: m, isExpanded: true, dropdownColor: Color(0xFF1E232F), style: TextStyle(color: Colors.white),
                     items: ['Easypaisa','JazzCash','Binance'].map((e)=>DropdownMenuItem(value:e,child:Text(e))).toList(), onChanged:(v){s(()=>m=v!);}),
                   SizedBox(height:10), TextField(controller: acc, style: TextStyle(color: Colors.white), decoration: InputDecoration(hintText: '03xxxxxxxxx', labelText: 'Account Number', labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)), focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.orange))))
                 ]),
                 actions: [TextButton(onPressed: ()=>Navigator.pop(ctx), child: Text('Cancel')), ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.orange), onPressed: () async {
-                  if(balance < 5){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Need \$5 Minimum! Keep Watching Ads'))); return;}
-                  await sendToTelegram(m, acc.text); Navigator.pop(ctx); setState(()=>balance=0);
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Request Sent to Telegram!')));
+                  if(acc.text.isEmpty){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Enter Account Number'))); return;}
+                  await sendToTelegram(m, acc.text); Navigator.pop(ctx);
                 }, child: Text('Request Withdraw'))],
               )));
             }
             @override Widget build(BuildContext context) {
-              return MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData.dark(), home: Scaffold(
-                backgroundColor: Color(0xFF0B0E14), appBar: AppBar(title: Text('BSC Mine Hub', style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.orange, actions:[IconButton(icon: Icon(Icons.wallet, color: Colors.white), onPressed: withdraw)]),
+              return MaterialApp(debugShowCheckedModeBanner: false, home: Scaffold(
+                backgroundColor: Color(0xFF0B0E14), appBar: AppBar(title: Text('BSC Mine Hub', style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.orange, actions:[IconButton(icon: Icon(Icons.wallet), onPressed: withdraw)]),
                 body: Padding(padding: EdgeInsets.all(16), child: Column(children:[
-                  Container(width: double.infinity, padding: EdgeInsets.all(22), decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.orange.withOpacity(0.3))), child: Column(children:[
-                    Text('Your Balance', style: TextStyle(color: Colors.white60, letterSpacing: 1)), SizedBox(height:8), Text('\$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.orange, fontSize: 42, fontWeight: FontWeight.bold)),
-                    SizedBox(height:18), SizedBox(width: double.infinity, child: ElevatedButton(onPressed: ()=>watchAd(), style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, padding: EdgeInsets.symmetric(vertical:16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text('WATCH AD +0.00010', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)))) , SizedBox(height:10), SizedBox(width: double.infinity, child: OutlinedButton(onPressed: withdraw, style: OutlinedButton.styleFrom(side: BorderSide(color: Colors.white24), padding: EdgeInsets.symmetric(vertical:14)), child: Text('WITHDRAW', style: TextStyle(color: Colors.white)))) ,
+                  Container(width: double.infinity, padding: EdgeInsets.all(22), decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(20)), child: Column(children:[
+                    Text('Your Balance', style: TextStyle(color: Colors.white60)), SizedBox(height:8), Text('\$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.orange, fontSize: 42, fontWeight: FontWeight.bold)),
+                    SizedBox(height:18), SizedBox(width: double.infinity, child: ElevatedButton(onPressed: ()=>watchAd(), style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, padding: EdgeInsets.symmetric(vertical:16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text('WATCH AD +0.00010', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)))) , SizedBox(height:10), SizedBox(width: double.infinity, child: OutlinedButton(onPressed: withdraw, child: Text('WITHDRAW', style: TextStyle(color: Colors.white)))) ,
                   ])),
                   SizedBox(height:20), Row(children:[
-                    Expanded(child: InkWell(onTap: spinWheel, borderRadius: BorderRadius.circular(16), child: Container(height: 125, decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(16)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[Icon(Icons.casino, color: Colors.pinkAccent, size: 40), SizedBox(height:8), Text('SPIN & WIN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)), SizedBox(height:2), Container(padding: EdgeInsets.symmetric(horizontal:8, vertical:2), decoration: BoxDecoration(color: Colors.pinkAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: Text('$spinsLeft Left', style: TextStyle(color: Colors.pinkAccent, fontSize:11)))])))),
+                    Expanded(child: InkWell(onTap: spinWheel, child: Container(height: 125, decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(16)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[Icon(Icons.casino, color: Colors.pinkAccent, size: 40), SizedBox(height:8), Text('SPIN & WIN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('$spinsLeft Left', style: TextStyle(color: Colors.pinkAccent, fontSize:11))])))),
                     SizedBox(width:12),
-                    Expanded(child: InkWell(onTap: referEarn, borderRadius: BorderRadius.circular(16), child: Container(height: 125, decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(16)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[Icon(Icons.group_add_rounded, color: Colors.greenAccent, size: 40), SizedBox(height:8), Text('REFER & EARN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)), SizedBox(height:2), Container(padding: EdgeInsets.symmetric(horizontal:8, vertical:2), decoration: BoxDecoration(color: Colors.greenAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: Text('\$0.50 / Refer', style: TextStyle(color: Colors.greenAccent, fontSize:11)))])))),
+                    Expanded(child: InkWell(onTap: (){ Share.share('My App Link'); setState(()=>balance+=0.00020); }, child: Container(height: 125, decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(16)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[Icon(Icons.group_add, color: Colors.greenAccent, size: 40), SizedBox(height:8), Text('REFER & EARN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('\$0.50 / Refer', style: TextStyle(color: Colors.greenAccent, fontSize:11))])))),
                   ]),
-                  Spacer(), Text('Min Withdraw \$5.00 | Keep Earning!', style: TextStyle(color: Colors.white24, fontSize:11))
                 ])),
               ));
             }
           }
           EOF
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          sed -i 's/<manifest/<manifest xmlns:tools="http:\/\/schemas.android.com\/tools"/' $MANIFEST
-          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET" \/>\n    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" \/>\n    <application/' $MANIFEST
-          sed -i 's|</manifest>|  <queries><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent></queries></manifest>|' $MANIFEST
+          sed -i 's/<manifest/<manifest xmlns:tools="http:\/\/schemas.android.com\/tools"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET" \/>\n    <application/' android/app/src/main/AndroidManifest.xml
           flutter pub add url_launcher share_plus http
           flutter build apk --release --split-per-abi
     artifacts:
