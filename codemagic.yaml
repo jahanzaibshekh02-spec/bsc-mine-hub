@@ -5,36 +5,19 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Build Ad App
+      - name: Build Working
         script: |
-          rm -rf android
+          rm -rf android lib
           flutter create --platforms=android .
-          flutter pub add google_mobile_ads url_launcher
-          python3 << 'PY'
-          import pathlib
-          p=pathlib.Path("android/app/src/main/AndroidManifest.xml")
-          t=p.read_text()
-          adm="ca-app-pub-9184265616231271~4098381853"
-          t=t.replace("<application", '<queries><package android:name="com.whatsapp" /></queries>\n    <application', 1)
-          if "APPLICATION_ID" not in t:
-            idx=t.find("<application")
-            e=t.find(">", idx)
-            t=t[:e+1]+f'\n        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="{adm}"/>' + t[e+1:]
-          p.write_text(t)
-          PY
+          flutter pub add url_launcher
           cat > lib/main.dart << 'DART'
-          import 'dart:async'; import 'package:flutter/material.dart'; import 'package:google_mobile_ads/google_mobile_ads.dart'; import 'package:url_launcher/url_launcher.dart';
-          void main() async {WidgetsFlutterBinding.ensureInitialized(); await MobileAds.instance.initialize(); runApp(BSCApp());}
-          class BSCApp extends StatelessWidget{@override Widget build(BuildContext c){return MaterialApp(debugShowCheckedModeBanner:false, home:Home());}}
-          class Home extends StatefulWidget{@override State<Home> createState()=>_HomeState();}
-          class _HomeState extends State<Home>{
-            double bal=0.01200; bool mine=true; Timer? tim; BannerAd? banner; bool bannerOk=false; RewardedAd? reward; TextEditingController wc=TextEditingController();
-            @override void initState(){super.initState(); _loadBanner(); _loadReward(); tim=Timer.periodic(Duration(seconds:2),(t){if(mine) setState(()=>bal+=0.00001);});}
-            void _loadBanner(){banner=BannerAd(adUnitId:'ca-app-pub-3940256099942544/6300978111',size:AdSize.banner,request:AdRequest(),listener:BannerAdListener(onAdLoaded:(ad){setState(()=>bannerOk=true);},onAdFailedToLoad:(ad,e){ad.dispose();})); banner!.load();}
-            void _loadReward(){RewardedAd.load(adUnitId:'ca-app-pub-9184265616231271/7370879625',request:AdRequest(),rewardedAdLoadCallback:RewardedAdLoadCallback(onAdLoaded:(ad){reward=ad;},onAdFailedToLoad:(e){Future.delayed(Duration(seconds:10),_loadReward);}));}
-            void _watchAd(){if(reward!=null){reward!.show(onUserEarnedReward:(a,r){setState(()=>bal+=0.00010); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Reward +0.00010 BSC Added')));}); reward!.fullScreenContentCallback=FullScreenContentCallback(onAdDismissedFullScreenContent:(ad){ad.dispose(); _loadReward();});}else{ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Ad Loading... 5 sec wait karein'))); _loadReward();}}
-            Future<void> _withdraw() async {if(bal<0.01){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Minimum 0.01 BSC')));return;} if(wc.text.length<10){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Wallet Address Likhein')));return;} final msg="*NEW WITHDRAW REQUEST*%0A%0AAmount: ${bal.toStringAsFixed(5)} BSC%0AWallet: ${wc.text}%0AApp: BSC Mine Hub"; final uri=Uri.parse("https://wa.me/923494769780?text=$msg"); await launchUrl(uri,mode:LaunchMode.externalApplication); setState(()=>bal=0); Navigator.pop(context);}
-            @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text('BSC Mine Hub'),backgroundColor:Colors.amber,centerTitle:true),body:Column(children:[SizedBox(height:20),Icon(Icons.currency_bitcoin,size:80,color:Colors.amber),Text(bal.toStringAsFixed(5),style:TextStyle(fontSize:34,fontWeight:FontWeight.bold)),Text('BSC Balance',style:TextStyle(color:Colors.grey)),SizedBox(height:20),ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:mine?Colors.red:Colors.green,minimumSize:Size(250,50)),onPressed:()=>setState(()=>mine=!mine),child:Text(mine?'STOP MINING':'START MINING',style:TextStyle(color:Colors.white))),SizedBox(height:12),ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Colors.amber,minimumSize:Size(250,50)),onPressed:_watchAd,child:Text('WATCH AD +0.00010 BSC',style:TextStyle(color:Colors.black,fontWeight:FontWeight.bold))),SizedBox(height:12),OutlinedButton.icon(icon:Icon(Icons.wallet),label:Text('WITHDRAW'),onPressed:(){showDialog(context:c,builder:(_)=>AlertDialog(title:Text('Withdraw to BEP20'),content:TextField(controller:wc,decoration:InputDecoration(hintText:'0x...')),actions:[ElevatedButton(onPressed:_withdraw,child:Text('CONFIRM & SEND WHATSAPP'))]));}),Spacer(),if(bannerOk)Container(height:50,child:AdWidget(ad:banner!))]),);}
+          import 'dart:async'; import 'package:flutter/material.dart'; import 'package:url_launcher/url_launcher.dart';
+          void main()=>runApp(MaterialApp(debugShowCheckedModeBanner:false,home:Home()));
+          class Home extends StatefulWidget{State<Home> createState()=>_S();}
+          class _S extends State<Home>{
+            double b=0.01200; bool m=true; Timer? t; var wc=TextEditingController();
+            void initState(){super.initState(); t=Timer.periodic(Duration(seconds:2),(_){if(m)setState(()=>b+=0.00001);});}
+            @override Widget build(BuildContext c){return Scaffold(appBar:AppBar(title:Text('BSC Mine Hub'),backgroundColor:Colors.orange,centerTitle:true),body:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(Icons.currency_bitcoin,size:90,color:Colors.orange),SizedBox(height:10),Text(b.toStringAsFixed(5),style:TextStyle(fontSize:38,fontWeight:FontWeight.bold)),Text('BSC Mining...'),SizedBox(height:25),ElevatedButton(onPressed:()=>setState(()=>m=!m),style:ElevatedButton.styleFrom(backgroundColor:m?Colors.red:Colors.green,minimumSize:Size(220,50)),child:Text(m?'STOP':'START',style:TextStyle(color:Colors.white))),SizedBox(height:15),ElevatedButton(onPressed:()=>setState(()=>b+=0.00010),style:ElevatedButton.styleFrom(backgroundColor:Colors.amber,minimumSize:Size(220,50)),child:Text('CLAIM +0.00010',style:TextStyle(color:Colors.black))),SizedBox(height:15),OutlinedButton(onPressed:(){showDialog(context:c,builder:(_)=>AlertDialog(title:Text('Withdraw'),content:TextField(controller:wc,decoration:InputDecoration(hintText:'BEP20 Address')),actions:[ElevatedButton(onPressed:()async{final u=Uri.parse("https://wa.me/923494769780?text=WITHDRAW ${b.toStringAsFixed(5)} Wallet ${wc.text}"); await launchUrl(u,mode:LaunchMode.externalApplication); setState(()=>b=0); Navigator.pop(context);},child:Text('SEND WHATSAPP'))]));},child:Text('WITHDRAW'))])));}
           }
           DART
           flutter build apk --release
