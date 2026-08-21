@@ -11,7 +11,7 @@ jobs:
       - name: Fix Flutter Project
         run: |
           cp lib/main.dart /tmp/m.dart
-          flutter create. --project-name bsc_mine_hub --org com.spark.miner --platforms=android --overwrite
+          flutter create . --project-name bsc_mine_hub --org com.spark.miner --platforms=android --overwrite
           cp /tmp/m.dart lib/main.dart
       - run: flutter pub get
       - run: flutter build apk --debug
