@@ -9,7 +9,6 @@ jobs:
         with:
           flutter-version: '3.19.6'
           channel: 'stable'
-      - run: flutter create . --project-name spark_mine_hub --platforms=android
       - run: flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
