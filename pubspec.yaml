@@ -1,5 +1,5 @@
 name: spark_bitcoin_miner
-description: SPARK - Premium Bitcoin Miner App - For Sale
+description: SPARK - Premium Bitcoin Miner PRO
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  shared_preferences: ^2.2.2
+  share_plus: ^7.2.1
+  cupertino_icons: ^1.0.5
 
 flutter:
   uses-material-design: true
