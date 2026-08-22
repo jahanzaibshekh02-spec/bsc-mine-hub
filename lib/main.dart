@@ -31,6 +31,12 @@ class _SparkMinerState extends State<SparkMiner> {
   }
 
   @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
@@ -58,7 +64,7 @@ class _SparkMinerState extends State<SparkMiner> {
           const SizedBox(height: 30),
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFFD700), width: 3), boxShadow: [BoxShadow(color: Colors.amber.withOpacity(0.3), blurRadius: 30)]),
+            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0xFFFFD700), width: 3), boxShadow: [BoxShadow(color: Color(0x4DFFD700), blurRadius: 30)]),
             child: Icon(Icons.bolt, size: 80, color: isMining ? const Color(0xFFFFD700) : Colors.grey),
           ),
           const SizedBox(height: 20),
@@ -66,7 +72,7 @@ class _SparkMinerState extends State<SparkMiner> {
           Text('${hashRate.toStringAsFixed(1)} H/s', style: const TextStyle(color: Colors.white54)),
           const SizedBox(height: 20),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: isMining ? Colors.red : const Color(0xFFFFD700), foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFD700), foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15)),
             onPressed: () => setState(() => isMining = !isMining),
             child: Text(isMining ? 'STOP MINING' : 'START MINING', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
@@ -76,22 +82,20 @@ class _SparkMinerState extends State<SparkMiner> {
   }
 
   Widget buildRefer() {
-    return const SafeArea(child: Center(child: Text('Invite & Earn 10% Commission', style: TextStyle(color: Colors.white, fontSize: 18))));
+    return const Center(child: Text('Refer & Earn 10%', style: TextStyle(color: Colors.white, fontSize: 22)));
   }
 
-  // YE HAI PRO WALLET
   Widget buildWallet() {
-    final addrController = TextEditingController();
-    return SafeArea(
-      child: ListView(padding: const EdgeInsets.all(20), children: [
-        const Text('WALLET & WITHDRAW', style: TextStyle(color: Color(0xFFFFD700), fontSize: 22, fontWeight: FontWeight.bold)),
+    return Center(
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Text('${balance.toStringAsFixed(5)} BSC', style: const TextStyle(color: Color(0xFFFFD700), fontSize: 30, fontWeight: FontWeight.bold)),
         const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: const Color(0xFF11161F), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.amber.withOpacity(0.3))),
-          child: Column(children: [
-            Row(children: [const Text('Available to Withdraw', style: TextStyle(color: Colors.white54)), const Spacer(), Text('${balance.toStringAsFixed(2)} BSC', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold))]),
-          ]),
-        ),
-        const SizedBox(height: 20),
-        TextField(controller: addrController, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: 'Enter BEP20 (0x...) Address', hintStyle: const TextStyle(color: Colors.white38), filled: true, fillColor: const Color(0xFF11161F),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFD700), foregroundColor: Colors.black),
+          onPressed: () {},
+          child: const Text('WITHDRAW'),
+        )
+      ]),
+    );
+  }
+}
