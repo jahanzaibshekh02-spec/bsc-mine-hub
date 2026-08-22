@@ -13,10 +13,10 @@ jobs:
         with:
           flutter-version: '3.24.5'
           channel: 'stable'
-      - run: rm -rf android
+      - run: flutter clean
       - run: flutter create --platforms=android --project-name spark_bitcoin_miner .
-      - run: flutter pub upgrade
-      - run: flutter build apk --release --verbose
+      - run: flutter pub get
+      - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
           name: SPARK-Miner-PRO-APK
