@@ -1,4 +1,0 @@
-android/app/src/main/
-  ├── AndroidManifest.xml  <- YAHAN
-  └── kotlin/com/bscminehub/app/
-       └── MainActivity.kt  <- sirf ye
