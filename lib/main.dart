@@ -1,151 +1,155 @@
-import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'dart:async';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize();
-  runApp(SPARKMinerApp());
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    print("Firebase already initialized");
+  }
+  runApp(BscMineHubApp());
 }
 
-class SPARKMinerApp extends StatelessWidget {
+class BscMineHubApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Color(0xFF0A0A0A)),
-      home: MinerScreen(),
+      title: 'BSC Mine Hub Pro',
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: Color(0xFFF0B90B),
+        scaffoldBackgroundColor: Color(0xFF0B0E11),
+        fontFamily: 'Roboto',
+      ),
+      home: MiningDashboard(),
     );
   }
 }
 
-class MinerScreen extends StatefulWidget {
+class MiningDashboard extends StatefulWidget {
   @override
-  _MinerScreenState createState() => _MinerScreenState();
+  _MiningDashboardState createState() => _MiningDashboardState();
 }
 
-class _MinerScreenState extends State<MinerScreen> with TickerProviderStateMixin {
-  double balance = 5.77298;
-  bool isMining = true;
-  double hashRate = 255.0;
-  int boostSec = 40;
-  double multiplier = 2.0;
-  late AnimationController _controller;
+class _MiningDashboardState extends State<MiningDashboard> with TickerProviderStateMixin {
+  double balance = 0.543882;
+  bool isMining = false;
   Timer? _timer;
-  
-  // ADS
-  BannerAd? _bannerAd;
-  InterstitialAd? _interstitialAd;
-  RewardedAd? _rewardedAd;
+  late AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: Duration(seconds: 2))..repeat();
-    loadBalance();
-    startMining();
-    loadBanner();
-    loadInterstitial();
-    loadRewarded();
+    _pulseController = AnimationController(vsync: this, duration: Duration(seconds: 1))..repeat(reverse: true);
   }
 
-  void loadBanner() {
-    _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-3940256099942544/6300978111', // Test ID - Buyer will change
-      size: AdSize.banner,
-      request: AdRequest(),
-      listener: BannerAdListener(),
-    )..load();
-  }
-  void loadInterstitial() {
-    InterstitialAd.load(adUnitId: 'ca-app-pub-3940256099942544/1033173712', request: AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) => _interstitialAd = ad, onAdFailedToLoad: (e) {}));
-  }
-  void loadRewarded() {
-    RewardedAd.load(adUnitId: 'ca-app-pub-3940256099942544/5224354917', request: AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(onAdLoaded: (ad) => _rewardedAd = ad, onAdFailedToLoad: (e) {}));
+  void toggleMining() {
+    setState(() => isMining = !isMining);
+    if (isMining) {
+      _timer = Timer.periodic(Duration(milliseconds: 800), (timer) {
+        setState(() => balance += 0.000012);
+      });
+    } else {
+      _timer?.cancel();
+    }
   }
 
-  void loadBalance() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() => balance = prefs.getDouble('balance') ?? 5.77298);
-  }
-
-  void startMining() {
-    _timer = Timer.periodic(Duration(milliseconds: 100), (t) {
-      if(isMining){
-        setState(() {
-          balance += 0.00001 * multiplier;
-          hashRate = 200 + Random().nextInt(100) + Random().nextDouble();
-          if(boostSec > 0) boostSec--; else multiplier = 1.0;
-        });
-      }
-    });
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pulseController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: _bannerAd != null ? Container(height: 50, child: AdWidget(ad: _bannerAd!)) : null,
-      body: Column(
-        children: [
-          SizedBox(height: 80),
-          Text("SPARK MINER PRO", style: TextStyle(color: Colors.amber, fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 2)),
-          SizedBox(height: 50),
-          RotationTransition(
-            turns: _controller,
-            child: Container(
-              width: 200, height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [Color(0xFFFFD700), Color(0xFFB8860B)]),
-                boxShadow: [BoxShadow(color: Colors.amber.withOpacity(0.6), blurRadius: 30, spreadRadius: 5)],
-                border: Border.all(color: Colors.amberAccent, width: 3),
-              ),
-              child: Center(child: Text("S", style: TextStyle(fontSize: 100, fontWeight: FontWeight.bold, color: Colors.black87))),
-            ),
-          ),
-          SizedBox(height: 30),
-          Text("${balance.toStringAsFixed(5)} BSC", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-          Text("BOOSTED ${multiplier}x - ${boostSec}s | ${hashRate.toStringAsFixed(1)} H/s", style: TextStyle(color: Colors.greenAccent)),
-          SizedBox(height: 20),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            ElevatedButton(
-              onPressed: () => setState(() => isMining = !isMining),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.amber, foregroundColor: Colors.black, padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15), shape: StadiumBorder()),
-              child: Text(isMining ? "STOP" : "START", style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: () {
-                _interstitialAd?.show();
-                setState(() { multiplier = 2.0; boostSec = 40; });
-                loadInterstitial();
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.white10),
-              child: Text("🚀 BOOST"),
-            ),
-            SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: () {
-                _rewardedAd?.show(onUserEarnedReward: (ad, reward) {
-                  setState(() { multiplier = 5.0; boostSec = 60; balance += 0.5; });
-                });
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: Text("AD 5x"),
-            ),
-          ]),
-          Spacer(),
-          Padding(
-            padding: EdgeInsets.all(10),
-            child: Text("AdMob Ready | Buyer just change Ad IDs in main.dart", style: TextStyle(color: Colors.grey, fontSize: 10)),
-          )
-        ],
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Icon(Icons.hexagon, color: Color(0xFFF0B90B)),
+            SizedBox(width: 8),
+            Text("BSC MINE HUB", style: TextStyle(color: Color(0xFFF0B90B), fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+            Spacer(),
+            Container(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Color(0xFFF0B90B), borderRadius: BorderRadius.circular(5)), child: Text("PRO", style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)))
+          ],
+        ),
+        backgroundColor: Colors.black,
       ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // BNB Coin Animation
+            if (isMining) ScaleTransition(scale: Tween(begin: 0.95, end: 1.05).animate(_pulseController), child: Icon(Icons.currency_bitcoin, size: 80, color: Color(0xFFF0B90B))),
+            SizedBox(height: 10),
+            Container(
+              padding: EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [Color(0xFF1E2026), Color(0xFF2B2F36)]),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Color(0xFFF0B90B).withOpacity(0.5), width: 1.5),
+                boxShadow: [BoxShadow(color: Color(0xFFF0B90B).withOpacity(0.1), blurRadius: 20)]
+              ),
+              child: Column(
+                children: [
+                  Text("MINING DASHBOARD • BEP20", style: TextStyle(color: Colors.grey, letterSpacing: 1.1, fontSize: 11)),
+                  SizedBox(height: 12),
+                  Text("${balance.toStringAsFixed(6)} BNB", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFF0B90B))),
+                  Text("~ \$${(balance * 605).toStringAsFixed(2)} USD", style: TextStyle(color: Colors.grey)),
+                  SizedBox(height: 18),
+                  LinearProgressIndicator(value: isMining ? null : 0.72, backgroundColor: Colors.black, color: Color(0xFFF0B90B)),
+                  SizedBox(height: 8),
+                  Text(isMining ? "Mining... Block #2847591" : "72% • Next Payout: ~2h 14m", style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  SizedBox(height: 18),
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+                    _statBox("HASHRATE", "1.24 TH/s", Icons.speed),
+                    _statBox("24H EARNED", "+0.012 BNB", Icons.trending_up),
+                    _statBox("STATUS", isMining ? "ACTIVE" : "IDLE", Icons.verified_user),
+                  ])
+                ],
+              ),
+            ),
+            SizedBox(height: 25),
+            SizedBox(
+              width: double.infinity, height: 58,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: isMining ? Colors.redAccent : Color(0xFFF0B90B), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
+                onPressed: toggleMining,
+                child: Text(isMining ? "⏹ STOP MINING" : "⛏ START MINING", style: TextStyle(color: isMining ? Colors.white : Colors.black, fontSize: 17, fontWeight: FontWeight.w900)),
+              ),
+            ),
+            SizedBox(height: 15),
+            Row(children: [
+              Expanded(child: _actionBtn("Withdraw", Icons.account_balance_wallet)),
+              SizedBox(width: 10),
+              Expanded(child: _actionBtn("Refer & Earn", Icons.people)),
+            ]),
+            SizedBox(height: 20),
+            Text("Network: BSC • Gas: Low • Secure Mining Protocol", style: TextStyle(color: Colors.grey, fontSize: 11))
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statBox(String title, String value, IconData icon) {
+    return Column(children: [
+      Icon(icon, size: 18, color: Color(0xFFF0B90B)),
+      SizedBox(height: 4),
+      Text(title, style: TextStyle(fontSize: 9, color: Colors.grey)),
+      Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))
+    ]);
+  }
+
+  Widget _actionBtn(String label, IconData icon) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(color: Color(0xFF1E2026), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white10)),
+      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 16, color: Colors.white70), SizedBox(width: 6), Text(label, style: TextStyle(fontSize: 13))]),
     );
   }
 }
